@@ -10,7 +10,7 @@ export default function FeatureHighlights() {
   return (
     <ul
       aria-label="What KisanSetu offers"
-      className="grid grid-cols-2 gap-x-2 gap-y-9 pb-[104px] lg:grid-cols-4 lg:gap-x-0"
+       className="grid grid-cols-2 gap-x-2 gap-y-6 pb-6 lg:grid-cols-4 lg:gap-x-0"
     >
       {HERO_FEATURES.map((feature, i) => (
         <li

@@ -3,9 +3,8 @@ import Reveal from "./Reveal";
 import SectionHeading from "./SectionHeading";
 
 export default function OrdersSection() {
-  return (
-    <section id="orders" aria-label="Order tracking" className="bg-ks-bg py-20 sm:py-24">
-      <div className="ks-container">
+    return (
+    <div id="orders">
         <Reveal>
           <SectionHeading
             eyebrow="End-to-End Tracking"
@@ -53,6 +52,5 @@ export default function OrdersSection() {
           </ol>
         </Reveal>
       </div>
-    </section>
   );
 }

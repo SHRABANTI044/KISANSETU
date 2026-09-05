@@ -1,6 +1,7 @@
 import { Calculator, CalendarClock, MapPinned, UserCheck } from "lucide-react";
 import BuyerFeatures from "./BuyerFeatures";
 import FarmerFeatures from "./FarmerFeatures";
+import OrdersSection from "../components/OrdersSection";
 import Reveal from "./Reveal";
 import SectionHeading from "./SectionHeading";
 
@@ -87,6 +88,9 @@ export default function FeaturesSection() {
         </div>
         <div className="mt-16 sm:mt-20">
           <BuyerFeatures />
+        </div>
+        <div className="mt-16 sm:mt-20">
+          <OrdersSection />
         </div>
       </div>
     </section>

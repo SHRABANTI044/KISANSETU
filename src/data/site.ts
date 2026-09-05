@@ -32,10 +32,10 @@ export interface SectionLink {
 
 /** Landing-page anchor navigation (order shown in the navbar). */
 export const SECTION_LINKS: SectionLink[] = [
-  { label: "Home", id: "home" },
-  { label: "About Us", id: "about" },
+{ label: "Home", id: "home" },
   { label: "How It Works", id: "how-it-works" },
   { label: "Features", id: "features" },
+  { label: "About Us", id: "about" },
   { label: "Contact", id: "contact" },
 ];
 
