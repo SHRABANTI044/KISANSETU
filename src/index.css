@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+@theme {
+  /* ---- KisanSetu palette (from reference) ---- */
+  --color-ks-green: #16803c; /* primary green */
+  --color-ks-dark: #155b32; /* dark green (headings) */
+  --color-ks-deep: #174a25; /* deep green (dark sections) */
+  --color-ks-light: #eaf6ea; /* light green tint */
+  --color-ks-bg: #f7faf7; /* very light background */
+  --color-ks-text: #111111; /* main text */
+  --color-ks-muted: #555555; /* secondary text */
+  --color-ks-border: #dde5de; /* borders */
+  --color-ks-orange: #e8862d; /* wordmark / sun accent */
+
+  /* ---- Typography ---- */
+  --font-display: "Poppins", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* ---- Elevation ---- */
+  --shadow-panel:
+    0 24px 60px -18px rgb(23 74 37 / 0.2), 0 4px 18px -6px rgb(23 74 37 / 0.08);
+  --shadow-card: 0 12px 40px -18px rgb(23 74 37 / 0.18);
+  --shadow-nav: 0 8px 28px -14px rgb(23 74 37 / 0.16);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Keep anchored section headings clear of the fixed 90px navbar */
+  [id] {
+    scroll-margin-top: 100px;
+  }
+
+  body {
+    @apply bg-white font-sans text-ks-text antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    @apply bg-ks-green/20 text-ks-deep;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ks-green;
+  }
+}
+
+@layer components {
+  /* Centered layout container used across the landing page */
+  .ks-container {
+    @apply mx-auto w-full max-w-[1240px] px-5 sm:px-6 lg:px-8;
+  }
+
+  /* Small pill label used above section headings */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-ks-green/15 bg-ks-light px-4 py-1.5 text-[11.5px] font-semibold tracking-[0.16em] text-ks-green uppercase;
+  }
+
+  .eyebrow-dark {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-[11.5px] font-semibold tracking-[0.16em] text-[#9fdcb0] uppercase;
+  }
+
+  /* Subtle dot texture for the deep-green smart-features band */
+  .bg-dots {
+    background-image: radial-gradient(rgb(255 255 255 / 0.09) 1px, transparent 1.6px);
+    background-size: 22px 22px;
+  }
+}
+
+/* ------------------------------ Animations ------------------------------ */
+
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered entrance for hero content (delay set inline per element) */
+.hero-item {
+  animation: hero-fade-up 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-pop-in {
+  transform-origin: top center;
+  animation: pop-in 0.18s ease-out both;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-menu-in {
+  animation: menu-in 0.25s ease-out both;
+}
+
+/* Hide scrollbars for the horizontal steppers */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .hero-item,
+  .animate-pop-in,
+  .animate-menu-in {
+    animation: none;
+  }
+}
