@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { BrowserRouter, Outlet, Route, Routes, useLocation } from "react-router-dom";
-import { LayoutDashboard, Sprout, Store, Truck, Users } from "lucide-react";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { Store, Truck } from "lucide-react";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import AboutPage from "./pages/AboutPage";
@@ -9,11 +9,22 @@ import FarmerProfilePage from "./pages/FarmerProfilePage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import Home from "./pages/Home";
 import LoginPage from "./pages/LoginPage";
-import MarketPricesPage from "./pages/MarketPricesPage";
 import MobileLoginPage from "./pages/MobileLoginPage";
 import NotFound from "./pages/NotFound";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import RegisterPage from "./pages/RegisterPage";
+
+/* Farmer dashboard module — fully isolated under src/dashboard */
+import DashboardPage from "./dashboard/pages/DashboardPage";
+import CropLotsPage from "./dashboard/pages/CropLotsPage";
+import MarketPricesPage from "./dashboard/pages/MarketPricesPage";
+import BuyersPage from "./dashboard/pages/BuyersPage";
+import AIAdvisorPage from "./dashboard/pages/AIAdvisorPage";
+import OffersPage from "./dashboard/pages/OffersPage";
+import OrdersTrackingPage from "./dashboard/pages/OrdersTrackingPage";
+import EarningsPage from "./dashboard/pages/EarningsPage";
+import HelpSupportPage from "./dashboard/pages/HelpSupportPage";
+import SettingsPage from "./dashboard/pages/SettingsPage";
 
 /**
  * Handles scrolling on route changes: honours #section hashes (so navbar
@@ -59,22 +70,33 @@ export default function App() {
         <Route path="/farmer-profile" element={<FarmerProfilePage />} />
         <Route path="/buyer-profile" element={<BuyerProfilePage />} />
 
+        {/* Farmer dashboard module — isolated under src/dashboard, shared shell */}
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/dashboard/crop-lots" element={<CropLotsPage />} />
+        <Route path="/dashboard/market-prices" element={<MarketPricesPage />} />
+        <Route path="/dashboard/buyers" element={<BuyersPage />} />
+        <Route path="/dashboard/ai-advisor" element={<AIAdvisorPage />} />
+        <Route path="/dashboard/offers" element={<OffersPage />} />
+        <Route path="/dashboard/orders" element={<OrdersTrackingPage />} />
+        <Route path="/dashboard/earnings" element={<EarningsPage />} />
+        <Route path="/dashboard/help-support" element={<HelpSupportPage />} />
+        <Route path="/dashboard/settings" element={<SettingsPage />} />
+
+        {/* Legacy dashboard URLs kept working — redirect into the module */}
+        <Route path="/farmer-dashboard" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/my-crop-lots" element={<Navigate to="/dashboard/crop-lots" replace />} />
+        <Route path="/market-prices" element={<Navigate to="/dashboard/market-prices" replace />} />
+        <Route path="/buyers" element={<Navigate to="/dashboard/buyers" replace />} />
+        <Route path="/ai-advisor" element={<Navigate to="/dashboard/ai-advisor" replace />} />
+        <Route path="/deals-offers" element={<Navigate to="/dashboard/offers" replace />} />
+        <Route path="/orders-shipments" element={<Navigate to="/dashboard/orders" replace />} />
+        <Route path="/earnings" element={<Navigate to="/dashboard/earnings" replace />} />
+        <Route path="/support" element={<Navigate to="/dashboard/help-support" replace />} />
+        <Route path="/settings" element={<Navigate to="/dashboard/settings" replace />} />
+
         {/* All site pages keep the existing navbar + footer */}
         <Route element={<SiteLayout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/market-prices" element={<MarketPricesPage />} />
-          <Route
-            path="/buyers"
-            element={
-              <PlaceholderPage
-                icon={Users}
-                eyebrow="Buyers"
-                title="Connect with Buyers"
-                description="Discover verified buyers across regions, see their crop requirements, compare offers and contact the ones that fit your produce."
-                points={["Verified buyer profiles", "Requirements & offers", "Direct communication"]}
-              />
-            }
-          />
           <Route
             path="/sell-produce"
             element={
@@ -88,18 +110,6 @@ export default function App() {
             }
           />
           <Route
-            path="/dashboard"
-            element={
-              <PlaceholderPage
-                icon={LayoutDashboard}
-                eyebrow="My Dashboard"
-                title="Your Personalised Dashboard"
-                description="Farmers see prices, recommended markets and buyers, listed produce and earnings. Buyers see requirements, produce and transactions."
-                points={["Role-based views", "Prices & recommendations", "Orders & earnings"]}
-              />
-            }
-          />
-          <Route
             path="/orders"
             element={
               <PlaceholderPage
@@ -108,18 +118,6 @@ export default function App() {
                 title="Track Orders & Payments"
                 description="Follow every confirmed deal through pickup, delivery and payment — all the way to completion."
                 points={["Stage-by-stage tracking", "Delivery updates", "Payment records"]}
-              />
-            }
-          />
-          <Route
-            path="/farmer-dashboard"
-            element={
-              <PlaceholderPage
-                icon={Sprout}
-                eyebrow="Farmer Dashboard"
-                title="Farmer Dashboard"
-                description="Your personalised farmer workspace — market prices, AI price predictions, market & buyer recommendations, produce listings, orders and earnings will live here."
-                points={["Prices & AI predictions", "Market & buyer recommendations", "Produce, orders & earnings"]}
               />
             }
           />
