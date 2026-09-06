@@ -25,6 +25,8 @@ import {
 } from "../components/profile-ui";
 import { getProfileData, getRegistration, saveProfileData } from "../utils/authStore";
 import { CircleAlert } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabase";
 
 /* --------------------------------- Types ---------------------------------- */
 
@@ -73,6 +75,85 @@ const YES_NO = ["Yes", "No"];
 export default function FarmerProfilePage() {
   const navigate = useNavigate();
   const [done, setDone] = useState(false);
+  const { user, refreshProfile } = useAuth();
+  const [saving, setSaving] = useState(false);
+
+  const handleCompleteProfile = async () => {
+    if (!user) {
+      alert("Please log in first to save your profile.");
+      return;
+    }
+    setSaving(true);
+    try {
+      // 1. Save farmer profile details
+      const { error: profileError } = await supabase.from("farmer_profiles").upsert({
+        id: user.id,
+        dob: data.dob || null,
+        gender: data.gender,
+        state: data.state || null,
+        district: data.district || null,
+        taluka: data.taluka || null,
+        village: data.village || null,
+        pincode: data.pincode || null,
+        farmer_type: data.farmerType,
+        farm_size: data.farmSize ? Number(data.farmSize) : null,
+        farm_size_unit: data.farmSizeUnit,
+        land_ownership: data.landOwnership,
+        farming_type: data.farmingType,
+        irrigation_type: data.irrigationType,
+        experience_years: data.experience ? Number(data.experience) : null,
+        fpo_member: data.fpoMember,
+        fpo_name: data.fpoName || null,
+        fpo_reg_id: data.fpoRegId || null,
+        fpo_location: data.fpoLocation || null,
+        preferred_market: data.market || null,
+        max_travel_distance: data.maxDistance ? Number(data.maxDistance) : null,
+        preferred_buyer_type: data.buyerType,
+        selling_method: data.sellingMethod,
+        payment_method: data.paymentMethod,
+        selling_period: data.sellingPeriod || null,
+        doc_type: data.docType,
+        doc_number: data.docNumber || null,
+        verification_status: "pending",
+      });
+      if (profileError) throw profileError;
+      // 2. Save crops if any were entered
+      if (crops && crops.length > 0) {
+        const cropRows = crops
+          .filter((c) => c.crop && c.crop.trim() !== "")
+          .map((c) => ({
+            farmer_id: user.id,
+            crop_name: c.crop,
+            variety: c.variety || null,
+            cultivation_area: c.area ? Number(c.area) : null,
+            quantity: c.quantity ? Number(c.quantity) : null,
+            unit: c.unit,
+            grade: c.grade,
+            available_date: c.availableDate || null,
+            is_organic: c.organic === "Yes",
+          }));
+        if (cropRows.length > 0) {
+          await supabase.from("farmer_crops").insert(cropRows);
+        }
+      }
+      // 3. Mark the profile as completed in the main profiles table
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ profile_completed: true })
+        .eq("id", user.id);
+      if (updateError) throw updateError;
+      // 4. Update the app's auth state
+      await refreshProfile();
+      // 5. Show completion screen
+      setDone(true);
+    } catch (err: any) {
+      console.error("Error saving farmer profile:", err);
+      alert(err.message || "Failed to save profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  // --- END OF ADDED CODE ---
   const stepLabel = (i: number) => STEPS[i] ?? "";
 
   const [state, setState] = useState<FarmerProfileState>(() => {
@@ -327,8 +408,18 @@ export default function FarmerProfilePage() {
           <StepNav
             onBack={back}
             backLabel="Back"
-            continueLabel={confirmed ? "Complete Profile" : "Confirm & Complete Profile"}
-            onContinue={() => confirmed && setDone(true)}
+            continueLabel={
+              saving
+                ? "Saving Profile..."
+                : confirmed
+                ? "Complete Profile"
+                : "Confirm & Complete Profile"
+            }
+            onContinue={() => {
+              if (confirmed && !saving) {
+                handleCompleteProfile();
+              }
+            }}
           />
         </SectionCard>
       )}

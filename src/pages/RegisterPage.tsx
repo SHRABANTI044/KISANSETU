@@ -1,3 +1,4 @@
+import { supabase } from "../lib/supabase";
 import { useEffect, useState } from "react";
 import type { FormEvent, InputHTMLAttributes } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -186,6 +187,7 @@ export default function RegisterPage() {
   const [view, setView] = useState<View>("form");
   const [role, setRole] = useState<Role | null>(null);
   const [roleError, setRoleError] = useState("");
+  const [serverError, setServerError] = useState("");
 
   // manual form
   const [fullName, setFullName] = useState("");
@@ -197,10 +199,6 @@ export default function RegisterPage() {
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // flows
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleTerms, setGoogleTerms] = useState(false);
-  const [googleTermsError, setGoogleTermsError] = useState("");
   const [creating, setCreating] = useState(false);
   const [createdName, setCreatedName] = useState("");
 
@@ -216,40 +214,7 @@ export default function RegisterPage() {
     return false;
   };
 
-  /* ------- Google demo: requires role first, then simulated chooser ------- */
-  const startGoogle = () => {
-    if (!selectRoleOrStop()) return;
-    setGoogleLoading(true);
-    window.setTimeout(() => {
-      setGoogleLoading(false);
-      setGoogleTerms(false);
-      setGoogleTermsError("");
-      setView("google-demo");
-    }, 1100);
-  };
-
-  const confirmGoogle = () => {
-    if (!googleTerms) {
-      setGoogleTermsError("Please accept the Terms & Conditions.");
-      return;
-    }
-    setGoogleTermsError("");
-    setCreating(true);
-    window.setTimeout(() => {
-      setCreating(false);
-      saveRegistration({
-        role,
-        method: "google",
-        fullName: GOOGLE_DEMO.name,
-        mobile: "",
-        email: GOOGLE_DEMO.email,
-        language: "English",
-      });
-      setCreatedName(GOOGLE_DEMO.name);
-      setView("success");
-    }, 1100);
-  };
-
+  
   /* ------------------------------ Manual flow ----------------------------- */
   const validateManual = () => {
     const e: Record<string, string> = {};
@@ -264,28 +229,63 @@ export default function RegisterPage() {
     return e;
   };
 
-  const submitManual = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (creating) return;
-    const e = validateManual();
-    setErrors(e);
-    if (role === null) setRoleError(e.role ?? "");
-    if (Object.values(e).some(Boolean)) return;
-    setCreating(true);
-    window.setTimeout(() => {
-      setCreating(false);
-      saveRegistration({ role, method: "manual", fullName: fullName.trim(), mobile: mobile.trim(), email: email.trim(), language });
-      setCreatedName(fullName.trim());
-      setView("success");
-    }, 1200);
-  };
+ const submitManual = async (event: FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+  if (creating) return;
+  setServerError("");
 
+  const e = validateManual();
+  setErrors(e);
+  if (role === null) setRoleError(e.role ?? "");
+  if (Object.values(e).some(Boolean)) return;
+
+  setCreating(true);
+
+  try {
+    // 1. Sign up user in Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password: password,
+          options: {
+            data: {
+              role: role,
+              full_name: fullName.trim(),
+              mobile: mobile.trim(),
+              language: language || "English",
+            },
+          },
+        });
+
+          if (authError) throw authError;
+
+          if (authData.user) {
+            // 2. Insert base record in profiles table
+            await supabase.from("profiles").upsert({
+              id: authData.user.id,
+              role: role,
+              full_name: fullName.trim(),
+              mobile: mobile.trim(),
+              email: email.trim(),
+              language: language || "English",
+              profile_completed: false, // Incomplete!
+            });
+          }
+
+          setCreatedName(fullName.trim());
+          setView("success");
+  } catch (err: any) {
+    setServerError(err.message || "Failed to create account.");
+  } finally {
+    setCreating(false);
+  }
+};
   /* ------------- After success → role profile completion ------------------ */
-  useEffect(() => {
-    if (view !== "success" || !role) return;
-    const timer = window.setTimeout(() => navigate(`/${role}-profile`), 2400);
-    return () => window.clearTimeout(timer);
-  }, [view, role, navigate]);
+    useEffect(() => {
+  if (view !== "success" || !role) return;
+  // Takes them directly to the form:
+  const timer = window.setTimeout(() => navigate(`/${role}-profile`), 1800);
+  return () => window.clearTimeout(timer);
+}, [view, role, navigate]);
 
   return (
     <main className="min-h-screen bg-white lg:flex">
@@ -350,23 +350,10 @@ export default function RegisterPage() {
                 </div>
                 {roleError && <div className="mt-2"><FieldError>{roleError}</FieldError></div>}
               </div>
-
-              {/* Method 1 — Google */}
-              <div className="mt-7">
-                <GoogleButton onClick={startGoogle} loading={googleLoading} />
-              </div>
-
-              {/* OR divider */}
-              <div className="my-7 flex items-center gap-4" role="separator" aria-orientation="horizontal">
-                <span className="h-px flex-1 bg-[#E1E5E1]" aria-hidden="true" />
-                <span className="text-[11.5px] font-semibold tracking-[0.22em] text-[#999999]">OR</span>
-                <span className="h-px flex-1 bg-[#E1E5E1]" aria-hidden="true" />
-              </div>
-
               {/* Method 2 — manual account creation */}
-              <div>
+              <div className="mt-10 border-t border-[#E1E5E1] pt-8">
                 <h2 className="font-display text-[17px] font-semibold text-[#111111]">Create Your Account</h2>
-                <p className="mt-1 text-[13px] text-[#666666]">Or create your account using your basic information.</p>
+                <p className="mt-1 text-[13px] text-[#666666]">Enter your basic information to complete registration.</p>
 
                 <form onSubmit={submitManual} className="mt-5 grid gap-4 sm:grid-cols-2" noValidate>
                   <RegField
@@ -454,6 +441,11 @@ export default function RegisterPage() {
                   <div className="sm:col-span-2">
                     <TermsCheckbox id="reg-terms" checked={terms} onChange={setTerms} error={errors.terms} />
                   </div>
+                  {serverError && (
+                    <div className="sm:col-span-2 rounded-xl bg-red-50 p-3 text-[13px] font-medium text-red-600">
+                    {serverError}
+                  </div>
+)}
 
                   <button
                     type="submit"
@@ -485,66 +477,6 @@ export default function RegisterPage() {
             </>
           )}
 
-          {/* --------------------------- GOOGLE DEMO VIEW --------------------------- */}
-          {view === "google-demo" && (
-            <div className="animate-pop-in mt-8 rounded-[22px] border border-[#E1E5E1] bg-white p-7 shadow-[0_16px_44px_-18px_rgba(17,17,17,0.16)] sm:p-8">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#EAF6EA] px-3.5 py-1.5 text-[11px] font-bold tracking-[0.1em] text-[#2E7D32] uppercase">
-                Google Sign-In Demo
-              </span>
-              <h1 className="mt-4 font-display text-[20px] font-bold text-[#111111]">Choose an account</h1>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-[#666666]">
-                to continue to <span className="font-semibold text-[#111111]">Kishan Setu</span>. This is a
-                simulated Google account — real Google OAuth will be connected later.
-              </p>
-
-              <div className="mt-5 flex items-center gap-3.5 rounded-xl border border-[#E1E5E1] bg-[#FAFBFA] p-4">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#2E7D32] font-display text-[15px] font-bold text-white">
-                  RP
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14.5px] font-semibold text-[#111111]">{GOOGLE_DEMO.name}</p>
-                  <p className="truncate text-[12.5px] text-[#666666]">{GOOGLE_DEMO.email}</p>
-                </div>
-                <span className="shrink-0 rounded-full bg-[#EAF6EA] px-3 py-1 text-[11px] font-bold text-[#2E7D32] capitalize">
-                  {role}
-                </span>
-              </div>
-
-              <div className="mt-5">
-                <TermsCheckbox id="google-terms" checked={googleTerms} onChange={setGoogleTerms} error={googleTermsError} />
-              </div>
-
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => setView("form")}
-                  className="inline-flex h-[50px] items-center justify-center rounded-xl border-[1.5px] border-[#D8DED8] bg-white px-6 text-[14px] font-semibold text-[#444444] transition-colors hover:border-[#2E7D32]/50 hover:text-[#2E7D32] sm:flex-none"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmGoogle}
-                  disabled={creating}
-                  aria-busy={creating}
-                  className="inline-flex h-[50px] flex-1 items-center justify-center gap-2.5 rounded-xl bg-[#2E7D32] px-6 text-[14.5px] font-semibold text-white shadow-[0_12px_24px_-10px_rgba(46,125,50,0.55)] transition-all duration-200 hover:bg-[#256628] disabled:cursor-wait disabled:opacity-85"
-                >
-                  {creating ? (
-                    <>
-                      <LoaderCircle className="h-[18px] w-[18px] animate-spin" strokeWidth={2.4} />
-                      Creating Account...
-                    </>
-                  ) : (
-                    <>
-                      Continue as {GOOGLE_DEMO.name.split(" ")[0]}
-                      <ArrowRight className="h-[17px] w-[17px]" strokeWidth={2.4} />
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* ------------------------------ SUCCESS VIEW ----------------------------- */}
           {view === "success" && (
             <div className="animate-pop-in mt-10 flex flex-col items-center rounded-[22px] border border-[#E1E5E1] bg-white p-9 text-center shadow-[0_16px_44px_-18px_rgba(17,17,17,0.16)]">
@@ -563,7 +495,7 @@ export default function RegisterPage() {
               </p>
               <button
                 type="button"
-                onClick={() => role && navigate(`/${role}-profile`)}
+                onClick={() => role && navigate(`/${role}-profile`)} // <-- Directly opens the form!
                 className="mt-6 inline-flex h-[50px] w-full max-w-[320px] items-center justify-center gap-2.5 rounded-xl bg-[#2E7D32] text-[14.5px] font-semibold text-white shadow-[0_12px_24px_-10px_rgba(46,125,50,0.55)] transition-all duration-200 hover:bg-[#256628]"
               >
                 Complete Your Profile

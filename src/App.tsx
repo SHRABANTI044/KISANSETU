@@ -14,6 +14,8 @@ import MobileLoginPage from "./pages/MobileLoginPage";
 import NotFound from "./pages/NotFound";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import RegisterPage from "./pages/RegisterPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import CompleteProfilePromptPage from "./pages/CompleteProfilePromptPage";
 
 /**
  * Handles scrolling on route changes: honours #section hashes (so navbar
@@ -61,81 +63,105 @@ export default function App() {
 
         {/* All site pages keep the existing navbar + footer */}
         <Route element={<SiteLayout />}>
+          {/* Public pages */}
           <Route path="/" element={<Home />} />
-          <Route path="/market-prices" element={<MarketPricesPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/complete-profile" element={<CompleteProfilePromptPage />} />
+
+          {/* Protected pages — require Login & Completed Profile */}
+          <Route
+            path="/market-prices"
+            element={
+              <ProtectedRoute>
+                <MarketPricesPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/buyers"
             element={
-              <PlaceholderPage
-                icon={Users}
-                eyebrow="Buyers"
-                title="Connect with Buyers"
-                description="Discover verified buyers across regions, see their crop requirements, compare offers and contact the ones that fit your produce."
-                points={["Verified buyer profiles", "Requirements & offers", "Direct communication"]}
-              />
+              <ProtectedRoute>
+                <PlaceholderPage
+                  icon={Users}
+                  eyebrow="Buyers"
+                  title="Connect with Buyers"
+                  description="Discover verified buyers across regions, see their crop requirements, compare offers and contact the ones that fit your produce."
+                  points={["Verified buyer profiles", "Requirements & offers", "Direct communication"]}
+                />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/sell-produce"
             element={
-              <PlaceholderPage
-                icon={Store}
-                eyebrow="Sell Produce"
-                title="Sell Your Produce"
-                description="List your crop with quantity and quality details, choose a market, and receive buyer recommendations tailored to your produce."
-                points={["List in 7 simple steps", "Market recommendations", "Transparent negotiation"]}
-              />
+              <ProtectedRoute>
+                <PlaceholderPage
+                  icon={Store}
+                  eyebrow="Sell Produce"
+                  title="Sell Your Produce"
+                  description="List your crop with quantity and quality details, choose a market, and receive buyer recommendations tailored to your produce."
+                  points={["List in 7 simple steps", "Market recommendations", "Transparent negotiation"]}
+                />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard"
             element={
-              <PlaceholderPage
-                icon={LayoutDashboard}
-                eyebrow="My Dashboard"
-                title="Your Personalised Dashboard"
-                description="Farmers see prices, recommended markets and buyers, listed produce and earnings. Buyers see requirements, produce and transactions."
-                points={["Role-based views", "Prices & recommendations", "Orders & earnings"]}
-              />
+              <ProtectedRoute>
+                <PlaceholderPage
+                  icon={LayoutDashboard}
+                  eyebrow="My Dashboard"
+                  title="Your Personalised Dashboard"
+                  description="Farmers see prices, recommended markets and buyers, listed produce and earnings. Buyers see requirements, produce and transactions."
+                  points={["Role-based views", "Prices & recommendations", "Orders & earnings"]}
+                />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/orders"
             element={
-              <PlaceholderPage
-                icon={Truck}
-                eyebrow="Orders"
-                title="Track Orders & Payments"
-                description="Follow every confirmed deal through pickup, delivery and payment — all the way to completion."
-                points={["Stage-by-stage tracking", "Delivery updates", "Payment records"]}
-              />
+              <ProtectedRoute>
+                <PlaceholderPage
+                  icon={Truck}
+                  eyebrow="Orders"
+                  title="Track Orders & Payments"
+                  description="Follow every confirmed deal through pickup, delivery and payment — all the way to completion."
+                  points={["Stage-by-stage tracking", "Delivery updates", "Payment records"]}
+                />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/farmer-dashboard"
             element={
-              <PlaceholderPage
-                icon={Sprout}
-                eyebrow="Farmer Dashboard"
-                title="Farmer Dashboard"
-                description="Your personalised farmer workspace — market prices, AI price predictions, market & buyer recommendations, produce listings, orders and earnings will live here."
-                points={["Prices & AI predictions", "Market & buyer recommendations", "Produce, orders & earnings"]}
-              />
+              <ProtectedRoute>
+                <PlaceholderPage
+                  icon={Sprout}
+                  eyebrow="Farmer Dashboard"
+                  title="Farmer Dashboard"
+                  description="Your personalised farmer workspace — market prices, AI price predictions, market & buyer recommendations, produce listings, orders and earnings will live here."
+                  points={["Prices & AI predictions", "Market & buyer recommendations", "Produce, orders & earnings"]}
+                />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/buyer-dashboard"
             element={
-              <PlaceholderPage
-                icon={Store}
-                eyebrow="Buyer Dashboard"
-                title="Buyer Dashboard"
-                description="Your buyer workspace — post purchase requirements, discover quality produce, connect with suitable farmers and track orders and transactions."
-                points={["Post requirements", "Find produce & farmers", "Orders & transactions"]}
-              />
+              <ProtectedRoute>
+                <PlaceholderPage
+                  icon={Store}
+                  eyebrow="Buyer Dashboard"
+                  title="Buyer Dashboard"
+                  description="Your buyer workspace — post purchase requirements, discover quality produce, connect with suitable farmers and track orders and transactions."
+                  points={["Post requirements", "Find produce & farmers", "Orders & transactions"]}
+                />
+              </ProtectedRoute>
             }
           />
-          <Route path="/about" element={<AboutPage />} />
+
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

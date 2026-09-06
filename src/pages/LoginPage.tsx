@@ -48,13 +48,13 @@ export default function LoginPage() {
               </div>
 
               {/* OR divider */}
-              <div className="my-8 flex items-center gap-4" role="separator" aria-orientation="horizontal">
+              {/* <div className="my-8 flex items-center gap-4" role="separator" aria-orientation="horizontal">
                 <span className="h-px flex-1 bg-[#E1E5E1]" aria-hidden="true" />
                 <span className="text-[11.5px] font-semibold tracking-[0.22em] text-[#999999]">OR</span>
                 <span className="h-px flex-1 bg-[#E1E5E1]" aria-hidden="true" />
               </div>
 
-              <MobileLoginOption />
+              <MobileLoginOption /> */}
 
               <p className="mt-7 text-center text-[14px] text-[#666666]">
                 Don&apos;t have an account?{" "}

@@ -5,34 +5,59 @@ import { Menu, User, UserPlus, X } from "lucide-react";
 import { SECTION_LINKS } from "../data/site";
 import { cn } from "../utils/cn";
 import Logo from "./Logo";
+import { useAuth } from "../context/AuthContext";
 
 function AuthButtons({ stacked = false, onNavigate }: { stacked?: boolean; onNavigate?: () => void }) {
-  return (
-    <div className={cn("flex items-center gap-3", stacked && "w-full flex-col sm:flex-row")}>
-      <Link
-        to="/login"
-        onClick={onNavigate}
-        className={cn(
-          "inline-flex h-[46px] items-center justify-center gap-2 rounded-xl border-[1.6px] border-ks-green bg-white px-6 text-[15px] font-semibold text-ks-green transition-all duration-200 hover:bg-ks-light",
-          stacked && "w-full sm:flex-1"
-        )}
-      >
-        <User className="h-[18px] w-[18px]" strokeWidth={2.2} />
-        Login
-      </Link>
-      <Link
-        to="/register"
-        onClick={onNavigate}
-        className={cn(
-          "inline-flex h-[46px] items-center justify-center gap-2 rounded-xl bg-ks-green px-6 text-[15px] font-semibold text-white shadow-[0_10px_22px_-10px_rgba(22,128,60,0.6)] transition-all duration-200 hover:bg-ks-dark",
-          stacked && "w-full sm:flex-1"
-        )}
-      >
-        <UserPlus className="h-[18px] w-[18px]" strokeWidth={2.2} />
-        Sign Up
-      </Link>
-    </div>
-  );
+  const { profile, isAuthenticated, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  if (isAuthenticated && profile) {
+    return (
+      <div className={cn("flex items-center gap-3", stacked && "w-full flex-col")}>
+        <span className="text-[14px] font-medium text-ks-dark">
+          Hi, <strong className="font-semibold">{profile?.full_name ? profile.full_name.split(" ")[0] : (profile?.email ? profile.email.split("@")[0] : "User")}</strong> ({profile?.role || "Member"})
+        </span>
+        <button
+          type="button"
+          onClick={async () => {
+            await signOut();
+            if (onNavigate) onNavigate();
+            navigate("/");
+          }}
+          className="inline-flex h-[40px] items-center justify-center rounded-xl border border-red-200 bg-red-50 px-4 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-100"
+        >
+          Logout
+        </button>
+      </div>
+    );
+  }
+
+    return (
+      <div className={cn("flex items-center gap-3", stacked && "w-full flex-col sm:flex-row")}>
+        <Link
+          to="/login"
+          onClick={onNavigate}
+          className={cn(
+            "inline-flex h-[46px] items-center justify-center gap-2 rounded-xl border-[1.6px] border-ks-green bg-white px-6 text-[15px] font-semibold text-ks-green transition-all duration-200 hover:bg-ks-light",
+            stacked && "w-full sm:flex-1"
+          )}
+        >
+          <User className="h-[18px] w-[18px]" strokeWidth={2.2} />
+          Login
+        </Link>
+        <Link
+          to="/register"
+          onClick={onNavigate}
+          className={cn(
+            "inline-flex h-[46px] items-center justify-center gap-2 rounded-xl bg-ks-green px-6 text-[15px] font-semibold text-white shadow-[0_10px_22px_-10px_rgba(22,128,60,0.6)] transition-all duration-200 hover:bg-ks-dark",
+            stacked && "w-full sm:flex-1"
+          )}
+        >
+          <UserPlus className="h-[18px] w-[18px]" strokeWidth={2.2} />
+          Sign Up
+        </Link>
+      </div>
+    );
 }
 
 export default function Navbar() {

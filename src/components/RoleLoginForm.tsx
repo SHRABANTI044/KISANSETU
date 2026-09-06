@@ -1,6 +1,7 @@
+import { supabase } from "../lib/supabase";
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link,useLocation,  useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   CircleAlert,
@@ -71,6 +72,7 @@ const inputBase =
 export default function RoleLoginForm({ role }: { role: LoginRole }) {
   const cfg = ROLE_CONFIG[role];
   const navigate = useNavigate();
+  const location = useLocation(); 
   const [identity, setIdentity] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
@@ -78,17 +80,52 @@ export default function RoleLoginForm({ role }: { role: LoginRole }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (loading) return;
-    if (!identity.trim() || !password) {
-      setError("Please enter your Email/Mobile Number and Password.");
-      return;
-    }
-    setError("");
-    setLoading(true);
-    window.setTimeout(() => navigate(cfg.dashboard), 1200);
-  };
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  if (loading) return;
+  if (!identity.trim() || !password) {
+    setError("Please enter your Email and Password.");
+    return;
+  }
+
+  setError("");
+  setLoading(true);
+
+  try {
+    // Supabase login with email and password
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: identity.trim(),
+        password: password,
+      });
+
+      if (error) throw error;
+
+            if (authData.user) {
+        // Check profile_completed from database
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("profile_completed, role")
+          .eq("id", authData.user.id)
+          .maybeSingle();
+
+        // 1. Where did the user want to go? (Default to dashboard if none)
+        const destination = (location.state as any)?.from || cfg.dashboard;
+
+        if (profile && profile.profile_completed) {
+          // 2. Profile is done -> Go directly to the clicked page (e.g. /market-prices)!
+          navigate(destination);
+        } else {
+          // 3. Profile NOT completed -> Show intermediate page
+          navigate("/complete-profile");
+        }
+      }
+      }
+  catch (err: any) {
+    setError(err.message || "Invalid login credentials. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <article className="animate-pop-in rounded-[22px] border border-[#E1E5E1] bg-white p-7 shadow-[0_12px_34px_-16px_rgba(17,17,17,0.14)] sm:p-8">

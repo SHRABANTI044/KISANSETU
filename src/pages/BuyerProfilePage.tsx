@@ -26,6 +26,8 @@ import {
   TextField,
 } from "../components/profile-ui";
 import { getProfileData, getRegistration, saveProfileData } from "../utils/authStore";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabase";
 
 /* --------------------------------- Types ---------------------------------- */
 
@@ -74,6 +76,82 @@ const EMPTY_REQUIREMENT: RequirementEntry = {
 export default function BuyerProfilePage() {
   const navigate = useNavigate();
   const [done, setDone] = useState(false);
+  const { user, refreshProfile } = useAuth();
+  const [saving, setSaving] = useState(false);
+
+  const handleCompleteProfile = async () => {
+    if (!user) {
+      alert("Please log in first to save your profile.");
+      return;
+    }
+    setSaving(true);
+    try {
+      // 1. Save buyer profile details
+      const { error: profileError } = await supabase.from("buyer_profiles").upsert({
+        id: user.id,
+        business_name: data.business || null,
+        contact_person: data.contactPerson,
+        business_type: data.businessType,
+        business_reg: data.businessReg || null,
+        years_in_business: data.years ? Number(data.years) : null,
+        state: data.state || null,
+        district: data.district || null,
+        taluka: data.taluka || null,
+        city: data.city || null,
+        pincode: data.pincode || null,
+        address: data.address || null,
+        max_procurement_distance: data.maxDistance ? Number(data.maxDistance) : null,
+        procurement_locations: data.procLocations || null,
+        preferred_categories: data.categories || null,
+        preferred_farmer_type: data.farmerType,
+        preferred_location: data.prefLocation || null,
+        payment_method: data.paymentMethod,
+        delivery_method: data.deliveryMethod,
+        gst_number: data.gst || null,
+        doc_type: data.docType,
+        doc_number: data.docNumber || null,
+        verification_status: "pending",
+      });
+      if (profileError) throw profileError;
+      // 2. Save buying requirements if any were entered
+      if (requirements && requirements.length > 0) {
+        const reqRows = requirements
+          .filter((r) => r.crop && r.crop.trim() !== "")
+          .map((r) => ({
+            buyer_id: user.id,
+            crop_name: r.crop,
+            variety: r.variety || null,
+            quantity: r.quantity ? Number(r.quantity) : null,
+            unit: r.unit,
+            grade: r.grade,
+            purchase_date: r.purchaseDate || null,
+            min_quantity: r.minQuantity ? Number(r.minQuantity) : null,
+            max_quantity: r.maxQuantity ? Number(r.maxQuantity) : null,
+            target_price: r.targetPrice || null,
+            status: "open",
+          }));
+        if (reqRows.length > 0) {
+          await supabase.from("buyer_requirements").insert(reqRows);
+        }
+      }
+      // 3. Mark profile completed in base profiles table
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ profile_completed: true })
+        .eq("id", user.id);
+      if (updateError) throw updateError;
+      // 4. Update auth state
+      await refreshProfile();
+      // 5. Show completion screen
+      setDone(true);
+    } catch (err: any) {
+      console.error("Error saving buyer profile:", err);
+      alert(err.message || "Failed to save profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  // --- END OF ADDED CODE ---
   const stepLabel = (i: number) => STEPS[i] ?? "";
 
   const [state, setState] = useState<BuyerProfileState>(() => {
@@ -308,8 +386,18 @@ export default function BuyerProfilePage() {
           <StepNav
             onBack={back}
             backLabel="Back"
-            continueLabel={confirmed ? "Complete Profile" : "Confirm & Complete Profile"}
-            onContinue={() => confirmed && setDone(true)}
+            continueLabel={
+              saving
+                ? "Saving Profile..."
+                : confirmed
+                ? "Complete Profile"
+                : "Confirm & Complete Profile"
+            }
+            onContinue={() => {
+              if (confirmed && !saving) {
+                handleCompleteProfile();
+              }
+            }}
           />
         </SectionCard>
       )}
