@@ -296,14 +296,14 @@ export const FOOTER_QUICK_LINKS: FooterLink[] = [
   { label: "Home", to: "/" },
   { label: "Market Prices", to: "/market-prices" },
   { label: "Buyers", to: "/buyers" },
-  { label: "Sell Produce", to: "/sell-produce" },
-  { label: "Orders", to: "/orders" },
+ { label: "Sell Produce", to: "/dashboard/crop-lots" },  
+  { label: "Orders", to: "/dashboard/orders" },        
   { label: "About Us", to: "/about" },
 ];
 
 export const FOOTER_FARMER_LINKS: FooterLink[] = [
   { label: "Farmer Registration", to: "/register" },
-  { label: "Sell Produce", to: "/sell-produce" },
+    { label: "Sell Produce", to: "/dashboard/crop-lots" },
   { label: "Market Prices", to: "/market-prices" },
   { label: "My Dashboard", to: "/dashboard" },
 ];
@@ -312,5 +312,5 @@ export const FOOTER_BUYER_LINKS: FooterLink[] = [
   { label: "Buyer Registration", to: "/register" },
   { label: "Find Produce", to: "/market-prices" },
   { label: "My Requirements", to: "/buyers" },
-  { label: "Orders", to: "/orders" },
+   { label: "Orders", to: "/dashboard/orders" }, 
 ];

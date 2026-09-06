@@ -158,7 +158,7 @@ export default function PriceOverviewCard({
                   dataKey="price"
                   position="top"
                   offset={8}
-                  formatter={(v) => {
+                  formatter={(v: any) => {
                     const n = Number(v);
                     return `₹${n.toFixed(n >= 100 ? 0 : 1)}`;
                   }}
