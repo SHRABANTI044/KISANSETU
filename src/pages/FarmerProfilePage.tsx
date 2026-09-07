@@ -39,6 +39,9 @@ interface CropEntry {
   grade: string;
   availableDate: string;
   organic: string;
+  listForSale: string; 
+  expectedPrice?: string; 
+  location?: string; 
 }
 
 interface FarmerProfileState {
@@ -66,6 +69,9 @@ const EMPTY_CROP: CropEntry = {
   grade: "A",
   availableDate: "",
   organic: "No",
+  listForSale: "No",
+  expectedPrice: "", 
+  location: "", 
 };
 
 const YES_NO = ["Yes", "No"];
@@ -117,23 +123,47 @@ export default function FarmerProfilePage() {
         verification_status: "pending",
       });
       if (profileError) throw profileError;
-      // 2. Save crops if any were entered
+            // 2. Save crops into farmer_crops and produce_listing
       if (crops && crops.length > 0) {
-        const cropRows = crops
-          .filter((c) => c.crop && c.crop.trim() !== "")
-          .map((c) => ({
-            farmer_id: user.id,
-            crop_name: c.crop,
-            variety: c.variety || null,
-            cultivation_area: c.area ? Number(c.area) : null,
-            quantity: c.quantity ? Number(c.quantity) : null,
-            unit: c.unit,
-            grade: c.grade,
-            available_date: c.availableDate || null,
-            is_organic: c.organic === "Yes",
-          }));
-        if (cropRows.length > 0) {
-          await supabase.from("farmer_crops").insert(cropRows);
+        const validCrops = crops.filter((c) => c.crop && c.crop.trim() !== "");
+
+        for (const c of validCrops) {
+          const isListed = c.listForSale === "Yes";
+          const statusVal = isListed ? "Live" : "Negotiation";
+
+          // Save to farmer_crops (All 3: Onion, Potato, Tomato)
+          const { data: insertedCrop, error: cropErr } = await supabase
+            .from("farmer_crops")
+            .insert({
+              farmer_id: user.id,
+              crop_name: c.crop,
+              variety: c.variety || null,
+              cultivation_area: c.area ? Number(c.area) : null,
+              quantity: c.quantity ? Number(c.quantity) : null,
+              unit: c.unit,
+              grade: c.grade,
+              available_date: c.availableDate || null,
+              is_organic: c.organic === "Yes",
+              list_for_sale: isListed,
+              status: statusVal, // 'Live' for Onion/Potato, 'Negotiation' for Tomato
+            })
+            .select()
+            .single();
+
+          // If toggled Yes, also save to produce_listing with status 'active'
+          if (!cropErr && insertedCrop && isListed) {
+            await supabase.from("produce_listings").insert({
+              farmer_id: user.id,
+              farmer_crop_id: insertedCrop.id,
+              crop_name: c.crop,
+              quantity: c.quantity ? Number(c.quantity) : 0,
+              unit: c.unit,
+              grade: c.grade,
+              expected_price: c.expectedPrice ? Number(c.expectedPrice) : 0, // <-- Real price
+              location: c.location || (data.district ? `${data.district}, ${data.state || ""}` : "Farm Location"), // <-- Real location
+              status: "active", // Default active in marketplace
+            });
+          }
         }
       }
       // 3. Mark the profile as completed in the main profiles table
@@ -299,6 +329,32 @@ export default function FarmerProfilePage() {
                   <SelectField id={`crop-grade-${i}`} label="Quality / Grade" value={entry.grade} onChange={(v) => setCrops((c) => c.map((x, idx) => (idx === i ? { ...x, grade: v } : x)))} options={["A", "B", "C", "Other"]} />
                   <TextField id={`crop-date-${i}`} label="Expected Harvest / Availability" type="date" value={entry.availableDate} onChange={(v) => setCrops((c) => c.map((x, idx) => (idx === i ? { ...x, availableDate: v } : x)))} />
                   <ChoiceField label="Organic" value={entry.organic} onChange={(v) => setCrops((c) => c.map((x, idx) => (idx === i ? { ...x, organic: v } : x)))} options={YES_NO} />
+                  <ChoiceField label="List this crop for sale immediately?" value={entry.listForSale} onChange={(v) => setCrops((c) => c.map((x, idx) => (idx === i ? { ...x, listForSale: v } : x)))} options={["Yes", "No"]} 
+/>
+ {entry.listForSale === "Yes" && (
+<div className="sm:col-span-2 rounded-xl border border-[#BFE3C5] bg-[#F4FAF4] p-4 flex flex-col gap-3">
+    <p className="text-[12px] font-semibold text-[#155B32]">
+      Marketplace Listing Details:
+    </p>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <TextField 
+        id={`crop-price-${i}`} 
+        label="Expected Price (₹ per unit)" 
+        value={entry.expectedPrice ?? ""} 
+        onChange={(v) => setCrops((c) => c.map((x, idx) => (idx === i ? { ...x, expectedPrice: v } : x)))} 
+        placeholder="e.g. 25" 
+        inputMode="numeric" 
+      />
+      <TextField 
+        id={`crop-location-${i}`} 
+        label="Produce Location" 
+        value={entry.location ?? ""} 
+        onChange={(v) => setCrops((c) => c.map((x, idx) => (idx === i ? { ...x, location: v } : x)))} 
+        placeholder="e.g. Nashik, Maharashtra" 
+      />
+    </div>
+  </div>
+  )}
                 </FieldGrid>
               </EntryCard>
             ))}
@@ -314,6 +370,8 @@ export default function FarmerProfilePage() {
           <StepNav onBack={back} onContinue={() => goTo(3)} />
         </SectionCard>
       )}
+
+      
 
       {/* --------------------- STEP 4 · SELLING PREFS ------------------------ */}
       {step === 3 && (
