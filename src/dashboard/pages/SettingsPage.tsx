@@ -404,5 +404,3 @@ export default function SettingsPage() {
     </DashboardLayout>
   );
 }
-
-
