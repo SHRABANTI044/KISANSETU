@@ -13,15 +13,12 @@ export interface LotFormValues {
   grade: string;
   organic: "yes" | "no";
   location: string;
-  availableFromIso: string;
-  availableUntilIso: string;
   expectedPrice: string;
   priceUnit: CropLot["unit"];
   description: string;
   image: string;
 }
 
-/** Intent replaces the old manual Status dropdown — the system controls status. */
 export type LotSaveIntent = "active" | "draft";
 
 const inputCls =
@@ -39,8 +36,6 @@ export function lotToForm(lot: CropLot): LotFormValues {
     grade: lot.grade,
     organic: lot.organic ? "yes" : "no",
     location: lot.location,
-    availableFromIso: lot.harvestDateIso,
-    availableUntilIso: lot.availableUntilIso,
     expectedPrice: lot.expectedPrice !== undefined ? String(lot.expectedPrice) : "",
     priceUnit: lot.priceUnit ?? lot.unit,
     description: lot.description,
@@ -56,8 +51,6 @@ export const EMPTY_LOT_FORM: LotFormValues = {
   grade: "Grade A",
   organic: "no",
   location: FARMER_PROFILE.location,
-  availableFromIso: "",
-  availableUntilIso: "",
   expectedPrice: "",
   priceUnit: "kg",
   description: "",
@@ -93,30 +86,24 @@ export default function CreateLotModal({
     reader.readAsDataURL(file);
   };
 
-  const validate = (intent: LotSaveIntent): string => {
-    /* Save Draft only needs the minimum required fields */
+  const validate = (): string => {
     if (!values.crop.trim()) return "Please select a Crop Name.";
-    if (intent === "draft") {
-      if (!values.location.trim()) return "Please enter a Location.";
-      return "";
-    }
     if (!values.quantity.trim() || !Number.isFinite(Number(values.quantity)) || Number(values.quantity) <= 0)
       return "Quantity must be a number greater than 0.";
     if (!values.location.trim()) return "Please enter a Location.";
-    if (!values.availableFromIso) return "Please choose the Available From date.";
     if (!values.expectedPrice.trim() || Number(values.expectedPrice) <= 0)
       return "Expected Price must be a number greater than 0.";
     return "";
   };
 
-  const submit = (intent: LotSaveIntent) => (e: FormEvent<HTMLFormElement>) => {
+  const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const message = validate(intent);
+    const message = validate();
     if (message) {
       setError(message);
       return;
     }
-    onSave(values, intent);
+    onSave(values, "active");
   };
 
   const qtyExample = values.quantity
@@ -142,7 +129,7 @@ export default function CreateLotModal({
             </h2>
             <p className="mt-1 text-[12.5px] text-[#666666]">
               {mode === "create"
-                ? "Add the produce details — status is set automatically when you publish or save a draft."
+                ? "Add the produce details to publish your lot to buyers."
                 : "Update the lot details and save your changes."}
             </p>
           </div>
@@ -156,8 +143,8 @@ export default function CreateLotModal({
           </button>
         </div>
 
-        <form onSubmit={submit("active")} className="mt-6 grid gap-4 sm:grid-cols-2">
-          {/* ------------------------- Section 1 — Crop Details ------------------------- */}
+        <form onSubmit={submit} className="mt-6 grid gap-4 sm:grid-cols-2">
+          {/* Section 1 — Crop Details */}
           <p className={cn(sectionCls, sectionTitleCls)}>Crop Details</p>
           <div>
             <label htmlFor="lot-crop" className={labelCls}>Crop Name *</label>
@@ -186,7 +173,7 @@ export default function CreateLotModal({
             </select>
           </div>
 
-          {/* --------------------------- Section 2 — Quantity --------------------------- */}
+          {/* Section 2 — Quantity */}
           <p className={cn(sectionCls, sectionTitleCls)}>Quantity</p>
           <div className="grid grid-cols-[1fr_110px] gap-2">
             <div>
@@ -202,7 +189,7 @@ export default function CreateLotModal({
           </div>
           <div />
 
-          {/* --------------------------- Section 3 — Location --------------------------- */}
+          {/* Section 3 — Location */}
           <p className={cn(sectionCls, sectionTitleCls)}>Location</p>
           <div className={sectionCls}>
             <label htmlFor="lot-location" className={labelCls}>Location *</label>
@@ -210,19 +197,7 @@ export default function CreateLotModal({
             <p className="mt-1.5 text-[11px] text-[#999999]">Prefilled from your saved farm location — you can edit it if needed.</p>
           </div>
 
-          {/* ------------------------- Section 4 — Availability ------------------------- */}
-          <p className={cn(sectionCls, sectionTitleCls)}>Availability</p>
-          <div>
-            <label htmlFor="lot-available-from" className={labelCls}>Available From *</label>
-            <input id="lot-available-from" type="date" value={values.availableFromIso} onChange={(e) => set({ availableFromIso: e.target.value })} className={cn(inputCls, "text-[#666666]")} />
-          </div>
-          <div>
-            <label htmlFor="lot-available-until" className={labelCls}>Available Until</label>
-            <input id="lot-available-until" type="date" value={values.availableUntilIso} onChange={(e) => set({ availableUntilIso: e.target.value })} className={cn(inputCls, "text-[#666666]")} />
-            <p className="mt-1.5 text-[11px] text-[#999999]">The lot expires automatically after this date.</p>
-          </div>
-
-          {/* ----------------------- Section 5 — Expected Price ----------------------- */}
+          {/* Section 4 — Expected Price */}
           <p className={cn(sectionCls, sectionTitleCls)}>Expected Price</p>
           <div className="grid grid-cols-[1fr_110px] gap-2">
             <div>
@@ -240,7 +215,7 @@ export default function CreateLotModal({
             <p className="text-[12px] font-medium text-[#666666]">{qtyExample}</p>
           </div>
 
-          {/* ------------------------ Section 6 — Crop Image ------------------------ */}
+          {/* Section 5 — Crop Image */}
           <p className={cn(sectionCls, sectionTitleCls)}>Crop Image (Optional)</p>
           <div className={sectionCls}>
             {values.image ? (
@@ -267,7 +242,7 @@ export default function CreateLotModal({
             <input ref={fileRef} type="file" accept="image/*" className="sr-only" aria-label="Upload crop image" onChange={(e) => pickImage(e.target.files?.[0])} />
           </div>
 
-          {/* ------------------------ Section 7 — Description ------------------------ */}
+          {/* Section 6 — Description */}
           <p className={cn(sectionCls, sectionTitleCls)}>Description</p>
           <div className={sectionCls}>
             <label htmlFor="lot-desc" className={labelCls}>Description</label>
@@ -295,15 +270,6 @@ export default function CreateLotModal({
             >
               Cancel
             </button>
-            {mode === "create" && (
-              <button
-                type="button"
-                onClick={(e) => submit("draft")(e as unknown as FormEvent<HTMLFormElement>)}
-                className="inline-flex h-[46px] items-center justify-center rounded-xl border-[1.5px] border-[#2E7D32] bg-white px-6 text-[13.5px] font-semibold text-[#2E7D32] transition-colors hover:bg-[#EAF6EA]"
-              >
-                Save Draft
-              </button>
-            )}
             <button
               type="submit"
               className="inline-flex h-[46px] items-center justify-center rounded-xl bg-[#2E7D32] px-7 text-[13.5px] font-semibold text-white shadow-[0_10px_22px_-10px_rgba(46,125,50,0.55)] transition-colors hover:bg-[#256628]"

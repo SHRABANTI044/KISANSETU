@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, TrendingUp } from "lucide-react";
 import FeatureHighlights from "./FeatureHighlights";
+import { useAuth } from "../context/AuthContext";
 /*
  * NOTE FOR THE TEAM: the original reference background was not present in the
  * repository. `src/assets/images/hero-bg.jpg` is a faithful recreation of the
@@ -11,6 +12,12 @@ import FeatureHighlights from "./FeatureHighlights";
 import heroBg from "../assets/images/hero-bg.jpg";
 
 export default function HeroSection() {
+  const { isAuthenticated, profile } = useAuth();
+  const getStartedRoute = !isAuthenticated
+    ? "/register"
+    : !profile?.profile_completed
+    ? (profile?.role === "buyer" ? "/buyer-profile" : "/farmer-profile")
+    : "/dashboard";
   return (
     <section id="home" aria-label="Introduction" className="relative isolate overflow-hidden">
       {/* Background image — farmer stays on the right; left sky hosts the copy */}
@@ -55,7 +62,7 @@ export default function HeroSection() {
             style={{ animationDelay: "240ms" }}
           >
             <Link
-              to="/register"
+              to={getStartedRoute}
               className="group inline-flex h-[48px] w-full items-center justify-between gap-2.5 rounded-full bg-ks-green pr-1.5 pl-6 text-[14.5px] font-semibold text-white shadow-[0_12px_24px_-10px_rgba(22,128,60,0.55)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-ks-dark sm:w-[175px]"
             >
               Get Started

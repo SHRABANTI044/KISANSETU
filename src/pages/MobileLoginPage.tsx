@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   ArrowRight,
   CircleAlert,
-  CircleCheck,
   LoaderCircle,
   Smartphone,
 } from "lucide-react";
@@ -20,7 +19,6 @@ export default function MobileLoginPage() {
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
 
   const handleSendOtp = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,7 +31,6 @@ export default function MobileLoginPage() {
         phone: formattedPhone,
       });
       if (error) throw error;
-      setSent(true);
       setStep("otp");
     } catch (err: any) {
       setError(err.message || "Failed to send OTP. Please check your number.");

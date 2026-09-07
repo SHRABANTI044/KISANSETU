@@ -1,4 +1,4 @@
-import { Calendar, ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 
 const controlBase =
   "h-[46px] w-full rounded-xl border border-[#E1E5E1] bg-white text-[13.5px] text-[#111111] transition-colors outline-none focus:border-[#2E7D32]";
@@ -10,12 +10,10 @@ function FieldLabel({ children }: { children: string }) {
 
 export interface LotFilterValues {
   crop: string;
-  dateFrom: string;
-  dateTo: string;
   search: string;
 }
 
-export const EMPTY_FILTERS: LotFilterValues = { crop: "All Crops", dateFrom: "", dateTo: "", search: "" };
+export const EMPTY_FILTERS: LotFilterValues = { crop: "All Crops", search: "" };
 
 export default function LotFilters({
   values,
@@ -28,7 +26,7 @@ export default function LotFilters({
 }) {
   return (
     <div className="rounded-2xl border border-[#E1E5E1] bg-white p-3.5 sm:p-4">
-      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.4fr]">
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-[240px_1fr]">
         {/* Crop */}
         <div>
           <FieldLabel>Crop</FieldLabel>
@@ -46,36 +44,6 @@ export default function LotFilters({
               ))}
             </select>
             <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-[#8A938A]" />
-          </div>
-        </div>
-
-        {/* Date range — From */}
-        <div>
-          <FieldLabel>Available From</FieldLabel>
-          <div className="relative">
-            <Calendar className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[#8A938A]" />
-            <input
-              type="date"
-              aria-label="Available from date"
-              value={values.dateFrom}
-              onChange={(e) => onChange({ dateFrom: e.target.value })}
-              className={`${controlBase} px-3.5 pl-10 font-medium text-[#666666]`}
-            />
-          </div>
-        </div>
-
-        {/* Date range — To */}
-        <div>
-          <FieldLabel>Available Until</FieldLabel>
-          <div className="relative">
-            <Calendar className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[#8A938A]" />
-            <input
-              type="date"
-              aria-label="Available until date"
-              value={values.dateTo}
-              onChange={(e) => onChange({ dateTo: e.target.value })}
-              className={`${controlBase} px-3.5 pl-10 font-medium text-[#666666]`}
-            />
           </div>
         </div>
 

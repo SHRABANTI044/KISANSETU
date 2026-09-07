@@ -5,7 +5,6 @@ import BuyerLoginForm from "../components/BuyerLoginForm";
 import FarmerLoginForm from "../components/FarmerLoginForm";
 import LoginBrandPanel from "../components/LoginBrandPanel";
 import LoginRoleCard from "../components/LoginRoleCard";
-import MobileLoginOption from "../components/MobileLoginOption";
 import { cn } from "../utils/cn";
 
 type LoginView = "select" | "farmer" | "buyer";

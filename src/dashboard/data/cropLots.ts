@@ -2,8 +2,6 @@ import tomatoImg from "../../assets/images/lots/tomato.jpg";
 import tomatoPlantsImg from "../../assets/images/lots/tomato-plants.jpg";
 import onionImg from "../../assets/images/lots/onion.jpg";
 import potatoImg from "../../assets/images/lots/potato.jpg";
-import chilliImg from "../../assets/images/lots/green-chilli.jpg";
-import cauliflowerImg from "../../assets/images/lots/cauliflower.jpg";
 import crateImg from "../../assets/images/mandi-market.jpg";
 
 /**
@@ -12,7 +10,7 @@ import crateImg from "../../assets/images/mandi-market.jpg";
  * without touching the UI.
  */
 
-export type LotStatus = "active" | "sold" | "draft" | "expired";
+export type LotStatus = "active" | "sold";
 
 export interface CropLot {
   id: string;
@@ -152,56 +150,55 @@ export const INITIAL_LOTS: CropLot[] = [
   },
   {
     id: "LOT250528004",
-    crop: "Green Chilli",
-    cropKey: "Green Chilli",
-    variety: "Hybrid",
-    quantity: 200,
+    crop: "Cabbage",
+    cropKey: "Cabbage",
+    variety: "Golden Acre",
+    quantity: 350,
     unit: "kg",
     grade: "Grade A",
-    organic: true,
+    organic: false,
     status: "active",
     location: DEFAULT_LOCATION,
     harvestDate: "28 May 2026",
     harvestDateIso: "2026-05-28",
     availableUntil: "30 Sep 2026",
     availableUntilIso: "2026-09-30",
-    expectedPrice: 40,
+    expectedPrice: 15,
     priceUnit: "kg",
     offers: 2,
     views: 98,
     postedOn: "28 May 2026",
     postedOnIso: "2026-05-28",
     lastUpdated: "29 May 2026, 08:10 AM",
-    description: "Crisp, spicy green chillies harvested this morning.",
-    image: chilliImg,
-    images: [chilliImg, crateImg],
+    description: "Fresh, compact green cabbage heads.",
+    image: crateImg,
+    images: [crateImg],
   },
   {
     id: "LOT250529005",
-    crop: "Cauliflower",
-    cropKey: "Cauliflower",
-    variety: "",
+    crop: "Pumpkin",
+    cropKey: "Pumpkin",
+    variety: "Desi",
     quantity: 400,
     unit: "kg",
     grade: "Good",
     organic: false,
-    status: "draft",
+    status: "active",
     location: DEFAULT_LOCATION,
-    harvestDate: "",
-    harvestDateIso: "",
-    availableUntil: "",
-    availableUntilIso: "",
-    expectedPrice: 25,
+    harvestDate: "29 May 2026",
+    harvestDateIso: "2026-05-29",
+    availableUntil: "30 Sep 2026",
+    availableUntilIso: "2026-09-30",
+    expectedPrice: 20,
     priceUnit: "kg",
-    offers: 0,
-    views: 0,
-    postedOn: "",
-    postedOnIso: "",
-    lastSaved: "29 May 2026",
+    offers: 1,
+    views: 64,
+    postedOn: "29 May 2026",
+    postedOnIso: "2026-05-29",
     lastUpdated: "29 May 2026, 07:55 PM",
-    description: "Compact white cauliflower heads with healthy leaves.",
-    image: cauliflowerImg,
-    images: [cauliflowerImg],
+    description: "Ripe, well-cured pumpkins ready for wholesale.",
+    image: crateImg,
+    images: [crateImg],
   },
 ];
 
@@ -261,14 +258,13 @@ export const FARMER_PROFILE = {
  * an ACTIVE lot whose "Available Until" date has passed is displayed as EXPIRED.
  * When the API exists, this derives from `farmer_lots.available_until`.
  */
-export function isLotExpired(lot: Pick<CropLot, "status" | "availableUntilIso">): boolean {
-  if (lot.status !== "active" || !lot.availableUntilIso) return false;
-  return lot.availableUntilIso < todayIso();
+export function isLotExpired(_lot: Pick<CropLot, "status" | "availableUntilIso">): boolean {
+  return false;
 }
 
-/** Status used for badges, tabs and counters — the stored status with expiry applied. */
+/** Status used for badges, tabs and counters (Active or Sold). */
 export function effectiveStatus(lot: CropLot): LotStatus {
-  return isLotExpired(lot) ? "expired" : lot.status;
+  return lot.status;
 }
 
 /* ------------------------------ Formatting ------------------------------- */

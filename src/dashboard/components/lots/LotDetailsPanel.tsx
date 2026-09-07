@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   BadgeCheck,
-  Calendar,
   Check,
   Clock,
   Copy,
@@ -157,8 +156,6 @@ export default function LotDetailsPanel({
               {lot.status === "sold" && lot.buyer && (
                 <DetailRow icon={BadgeCheck} label="Buyer" value={lot.buyer} strong />
               )}
-              {lot.harvestDate && <DetailRow icon={Calendar} label="Available From" value={lot.harvestDate} />}
-              {lot.availableUntil && <DetailRow icon={Calendar} label="Available Until" value={lot.availableUntil} />}
               {lot.variety && <DetailRow icon={Sprout} label="Variety" value={lot.variety} />}
               <DetailRow icon={BadgeCheck} label="Organic" value={lot.organic ? "Yes" : "No"} />
               <DetailRow icon={MapPin} label="Location" value={lot.location} />
@@ -177,13 +174,6 @@ export default function LotDetailsPanel({
                   <Clock className="h-3.5 w-3.5 shrink-0 text-[#2E7D32]" />
                   <span className="w-[105px] font-medium text-[#888888]">Posted On</span>
                   <span className="font-semibold text-[#111111]">{lot.postedOn}, 10:30 AM</span>
-                </div>
-              )}
-              {lot.lastSaved && lot.status === "draft" && (
-                <div className="flex items-center gap-2.5 text-[11.5px] text-[#777777]">
-                  <Clock className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-                  <span className="w-[105px] font-medium text-[#888888]">Last Saved</span>
-                  <span className="font-semibold text-[#111111]">{lot.lastSaved}</span>
                 </div>
               )}
               <div className="flex items-center gap-2.5 text-[11.5px] text-[#777777]">

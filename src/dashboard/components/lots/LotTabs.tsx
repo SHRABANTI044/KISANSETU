@@ -1,14 +1,11 @@
-import type { LotStatus } from "../../data/cropLots";
 import { cn } from "../../../utils/cn";
 
-export type LotTabKey = "all" | LotStatus;
+export type LotTabKey = "all" | "active" | "sold";
 
 const TAB_LABELS: { key: LotTabKey; label: string }[] = [
   { key: "all", label: "All Lots" },
   { key: "active", label: "Active" },
   { key: "sold", label: "Sold" },
-  { key: "draft", label: "Draft" },
-  { key: "expired", label: "Expired" },
 ];
 
 export default function LotTabs({

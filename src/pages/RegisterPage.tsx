@@ -20,18 +20,13 @@ import {
   User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import GoogleButton from "../components/GoogleButton";
 import LoginBrandPanel from "../components/LoginBrandPanel";
-import { saveRegistration } from "../utils/authStore";
 import type { Role } from "../utils/authStore";
 import { cn } from "../utils/cn";
 
 /* ------------------------------- Demo data -------------------------------- */
 
 const LANGUAGES = ["English", "हिंदी", "मराठी"];
-
-/** Simulated Google account used by the frontend-only demo. */
-const GOOGLE_DEMO = { name: "Ramesh Patil", email: "ramesh.patil.demo@gmail.com" };
 
 type View = "form" | "google-demo" | "success";
 
@@ -208,13 +203,6 @@ export default function RegisterPage() {
     setErrors((e) => ({ ...e, role: "" }));
   };
 
-  const selectRoleOrStop = () => {
-    if (role) return true;
-    setRoleError("Please select Farmer or Buyer.");
-    return false;
-  };
-
-  
   /* ------------------------------ Manual flow ----------------------------- */
   const validateManual = () => {
     const e: Record<string, string> = {};
