@@ -3,12 +3,13 @@ import { ChevronDown, PackageOpen, Plus, Trash2 } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import CreateLotModal from "../components/lots/CreateLotModal";
 import { EMPTY_LOT_FORM, lotToForm } from "../components/lots/CreateLotModal";
-import type { LotFormValues } from "../components/lots/CreateLotModal";
+import type { LotFormValues, LotSaveIntent } from "../components/lots/CreateLotModal";
 import LotCard from "../components/lots/LotCard";
 import type { LotAction } from "../components/lots/LotCard";
 import LotDetailsPanel from "../components/lots/LotDetailsPanel";
 import type { DetailTab } from "../components/lots/LotDetailsPanel";
 import LotFilters from "../components/lots/LotFilters";
+import { EMPTY_FILTERS } from "../components/lots/LotFilters";
 import type { LotFilterValues } from "../components/lots/LotFilters";
 import LotTabs from "../components/lots/LotTabs";
 import type { LotTabKey } from "../components/lots/LotTabs";
@@ -16,6 +17,7 @@ import {
   INITIAL_LOTS,
   INITIAL_OFFERS,
   LOT_VIEWERS,
+  effectiveStatus,
   nowTimestamp,
   todayIso,
   todayLabel,
@@ -53,7 +55,7 @@ export default function MyLotsPage() {
   /* -------------------------------- UI state -------------------------------- */
   const [selectedId, setSelectedId] = useState<string>(INITIAL_LOTS[0]!.id);
   const [tab, setTab] = useState<LotTabKey>("all");
-  const [filters, setFilters] = useState<LotFilterValues>({ crop: "All Crops", status: "All Status", date: "", search: "" });
+  const [filters, setFilters] = useState<LotFilterValues>(EMPTY_FILTERS);
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [detailTab, setDetailTab] = useState<DetailTab>("details");
   const [modal, setModal] = useState<{ mode: "create" | "edit"; lot?: CropLot } | null>(null);
@@ -74,29 +76,31 @@ export default function MyLotsPage() {
   );
 
   const counts = useMemo(() => {
+    /* Counters derived from live lot state — expiry-aware, never hardcoded. */
     const c: Record<LotTabKey, number> = { all: lots.length, active: 0, sold: 0, draft: 0, expired: 0 };
-    for (const lot of lots) c[lot.status] += 1;
+    for (const lot of lots) c[effectiveStatus(lot)] += 1;
     return c;
   }, [lots]);
 
   const visibleLots = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
-    const statusFromDropdown = filters.status.toLowerCase();
     const result = lots.filter((lot) => {
-      if (tab !== "all" && lot.status !== tab) return false;
+      const status = effectiveStatus(lot);
+      if (tab !== "all" && status !== tab) return false;
       if (filters.crop !== "All Crops" && lot.cropKey !== filters.crop) return false;
-      if (statusFromDropdown !== "all status" && lot.status !== statusFromDropdown) return false;
-      if (filters.date && lot.harvestDateIso !== filters.date && lot.postedOnIso !== filters.date) return false;
-      if (q && ![lot.crop, lot.cropKey, lot.id, lot.location].some((field) => field.toLowerCase().includes(q))) return false;
+      /* Date range against the lot's Available From date */
+      if (filters.dateFrom && lot.harvestDateIso && lot.harvestDateIso < filters.dateFrom) return false;
+      if (filters.dateTo && lot.harvestDateIso && lot.harvestDateIso > filters.dateTo) return false;
+      if (q && ![lot.crop, lot.variety ?? "", lot.cropKey, lot.id, lot.location].some((field) => field.toLowerCase().includes(q))) return false;
       return true;
     });
     const sorted = [...result];
     switch (sortKey) {
       case "newest":
-        sorted.sort((a, b) => b.postedOnIso.localeCompare(a.postedOnIso));
+        sorted.sort((a, b) => (b.postedOnIso || b.lastUpdated).localeCompare(a.postedOnIso || a.lastUpdated));
         break;
       case "oldest":
-        sorted.sort((a, b) => a.postedOnIso.localeCompare(b.postedOnIso));
+        sorted.sort((a, b) => (a.postedOnIso || a.lastUpdated).localeCompare(b.postedOnIso || b.lastUpdated));
         break;
       case "priceDesc":
         sorted.sort((a, b) => lotPrice(b) - lotPrice(a));
@@ -121,7 +125,7 @@ export default function MyLotsPage() {
 
   const resetFilters = () => {
     setTab("all");
-    setFilters({ crop: "All Crops", status: "All Status", date: "", search: "" });
+    setFilters(EMPTY_FILTERS);
   };
 
   const selectLot = (lot: CropLot, openTab?: DetailTab) => {
@@ -136,6 +140,10 @@ export default function MyLotsPage() {
     }
     if (action === "edit") {
       setModal({ mode: "edit", lot });
+      return;
+    }
+    if (action === "details") {
+      selectLot(lot, "details");
       return;
     }
     if (action === "publish") {
@@ -171,9 +179,11 @@ export default function MyLotsPage() {
     setDeleteTarget(null);
   };
 
-  const saveModal = (values: LotFormValues) => {
-    const harvestLabel = values.harvestDateIso ? isoToLabel(values.harvestDateIso) : "";
+  const saveModal = (values: LotFormValues, intent: LotSaveIntent) => {
+    const availableFromLabel = values.availableFromIso ? isoToLabel(values.availableFromIso) : "";
+    const availableUntilLabel = values.availableUntilIso ? isoToLabel(values.availableUntilIso) : "";
     if (modal?.mode === "edit" && modal.lot) {
+      /* Edit keeps the existing lot id, offers and views — never creates a new lot. */
       const target = modal.lot;
       setLots((prev) =>
         prev.map((l) =>
@@ -181,15 +191,22 @@ export default function MyLotsPage() {
             ? {
                 ...l,
                 crop: values.crop.trim(),
-                cropKey: values.crop.trim().replace(/\s*\(.*\)\s*$/, "").trim() || l.cropKey,
+                cropKey: values.crop.trim() || l.cropKey,
+                variety: values.variety.trim(),
                 quantity: Number(values.quantity) || l.quantity,
                 unit: values.unit,
                 grade: values.grade,
+                organic: values.organic === "yes",
                 location: values.location.trim(),
-                harvestDate: harvestLabel,
-                harvestDateIso: values.harvestDateIso,
+                harvestDate: availableFromLabel,
+                harvestDateIso: values.availableFromIso,
+                availableUntil: availableUntilLabel,
+                availableUntilIso: values.availableUntilIso,
                 expectedPrice: values.expectedPrice ? Number(values.expectedPrice) : l.expectedPrice,
+                priceUnit: values.priceUnit,
                 description: values.description.trim() || l.description,
+                image: values.image || l.image,
+                images: values.image && values.image !== l.image ? [values.image, ...l.images.slice(1)] : l.images,
                 lastUpdated: nowTimestamp(),
               }
             : l
@@ -197,21 +214,27 @@ export default function MyLotsPage() {
       );
       setToast(`Lot "${values.crop.trim()}" updated.`);
     } else {
+      /* Status is system-controlled: Create Lot → ACTIVE, Save Draft → DRAFT. */
+      const isDraft = intent === "draft";
       const id = `LOT${Date.now().toString().slice(-9)}`;
-      const isDraft = values.status === "draft";
       const today = todayLabel();
       const newLot: CropLot = {
         id,
         crop: values.crop.trim(),
-        cropKey: values.crop.trim().replace(/\s*\(.*\)\s*$/, "").trim() || values.crop.trim(),
+        cropKey: values.crop.trim(),
+        variety: values.variety.trim(),
         quantity: Number(values.quantity) || 0,
         unit: values.unit,
         grade: values.grade,
-        status: values.status,
+        organic: values.organic === "yes",
+        status: isDraft ? "draft" : "active",
         location: values.location.trim(),
-        harvestDate: harvestLabel,
-        harvestDateIso: values.harvestDateIso,
+        harvestDate: availableFromLabel,
+        harvestDateIso: values.availableFromIso,
+        availableUntil: availableUntilLabel,
+        availableUntilIso: values.availableUntilIso,
         expectedPrice: values.expectedPrice ? Number(values.expectedPrice) : undefined,
+        priceUnit: values.priceUnit,
         offers: 0,
         views: 0,
         postedOn: isDraft ? "" : today,
@@ -219,8 +242,8 @@ export default function MyLotsPage() {
         lastSaved: isDraft ? today : undefined,
         lastUpdated: nowTimestamp(),
         description: values.description.trim() || "Freshly harvested produce, ready for buyers.",
-        image: crateFallback,
-        images: [crateFallback],
+        image: values.image || crateFallback,
+        images: [values.image || crateFallback],
       };
       setLots((prev) => [newLot, ...prev]);
       setSelectedId(id);
@@ -309,6 +332,7 @@ export default function MyLotsPage() {
                 <LotCard
                   key={lot.id}
                   lot={lot}
+                  offersCount={(offersByLot[lot.id] ?? []).length}
                   selected={selectedLot?.id === lot.id}
                   onSelect={() => selectLot(lot)}
                   onAction={(action) => handleAction(lot, action)}
@@ -320,7 +344,7 @@ export default function MyLotsPage() {
           {/* Right details panel */}
           {selectedLot && (
             <LotDetailsPanel
-              lot={selectedLot}
+              lot={{ ...selectedLot, status: effectiveStatus(selectedLot) }}
               tab={detailTab}
               onTabChange={setDetailTab}
               offers={offersByLot[selectedLot.id] ?? []}

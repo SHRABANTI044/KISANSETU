@@ -1,9 +1,9 @@
 import { Eye, MapPin, Pencil, Trash2 } from "lucide-react";
 import type { CropLot, LotStatus } from "../../data/cropLots";
-import { formatPrice } from "../../data/cropLots";
+import { effectiveStatus, formatPrice } from "../../data/cropLots";
 import { cn } from "../../../utils/cn";
 
-export type LotAction = "offers" | "edit" | "delete" | "publish";
+export type LotAction = "details" | "offers" | "edit" | "delete" | "publish";
 
 export function LotStatusBadge({ status, className }: { status: LotStatus; className?: string }) {
   const styles: Record<LotStatus, string> = {
@@ -29,17 +29,22 @@ const BTN = "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg text
 
 export default function LotCard({
   lot,
+  offersCount,
   selected,
   onSelect,
   onAction,
 }: {
   lot: CropLot;
+  /** Live offers count derived from the offers state (replaces the stored counter). */
+  offersCount: number;
   selected: boolean;
   onSelect: () => void;
   onAction: (action: LotAction) => void;
 }) {
   const priceLabel = lot.status === "sold" ? "Sold Price" : "Expected Price";
   const priceValue = formatPrice(lot.status === "sold" ? lot.soldPrice : lot.expectedPrice);
+  /* Display status applies automatic expiry (ACTIVE + past Available Until → EXPIRED). */
+  const status: LotStatus = effectiveStatus(lot);
 
   const act = (action: LotAction) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -71,23 +76,30 @@ export default function LotCard({
 
       {/* Middle — lot info */}
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-[5px]">
-        <h3 className="text-[15px] leading-tight font-bold text-[#111111]">{lot.crop}</h3>
+        <h3 className="text-[15px] leading-tight font-bold text-[#111111]">
+          {lot.crop}
+          {lot.variety && <span className="font-medium text-[#666666]"> ({lot.variety})</span>}
+        </h3>
         <p className="text-[12.5px] font-medium text-[#666666]">
           {lot.quantity.toLocaleString("en-IN")} {lot.unit} • {lot.grade}
+          {lot.organic && <span className="ml-1.5 rounded-full bg-[#EAF6EA] px-2 py-0.5 text-[10px] font-bold text-[#2E7D32]">Organic</span>}
         </p>
         <p className="flex items-center gap-1.5 text-[12px] text-[#777777]">
           <MapPin className="h-3.5 w-3.5 shrink-0 text-[#2E7D32]" />
           {lot.location}
         </p>
         {lot.harvestDate && (
-          <p className="text-[12px] text-[#777777]">Harvest Date: {lot.harvestDate}</p>
+          <p className="text-[12px] text-[#777777]">Available From: {lot.harvestDate}</p>
+        )}
+        {lot.availableUntil && (
+          <p className="text-[12px] text-[#777777]">Available Until: {lot.availableUntil}</p>
         )}
         {lot.lastSaved && lot.status === "draft" && (
           <p className="text-[12px] text-[#777777]">Last Saved: {lot.lastSaved}</p>
         )}
         <p className="text-[13px] font-semibold text-[#111111]">
           {priceLabel}: <span className="text-[#2E7D32]">{priceValue}</span>
-          <span className="font-medium text-[#777777]"> /{lot.unit}</span>
+          <span className="font-medium text-[#777777]"> /{lot.priceUnit}</span>
         </p>
         {lot.status === "sold" && lot.buyer && (
           <p className="text-[12px] text-[#777777]">
@@ -102,11 +114,11 @@ export default function LotCard({
       {/* Right — status, stats, actions */}
       <div className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-x-4 gap-y-3 lg:w-[190px] lg:flex-col lg:items-end lg:justify-between lg:gap-2 lg:flex-nowrap">
         <div className="flex items-center gap-2 lg:flex-col lg:items-end lg:gap-2">
-          <LotStatusBadge status={lot.status} />
-          {lot.status !== "draft" && (
+          <LotStatusBadge status={status} />
+          {status !== "draft" && (
             <div className="flex items-center gap-3 lg:flex-col lg:items-end lg:gap-1">
               <p className="text-[12.5px] font-bold text-[#111111]">
-                {lot.offers} {lot.offers === 1 ? "Offer" : "Offers"}
+                {offersCount} {offersCount === 1 ? "Offer" : "Offers"}
               </p>
               <p className="flex items-center gap-1 text-[11.5px] text-[#777777]">
                 <Eye className="h-3.5 w-3.5" />
@@ -118,22 +130,33 @@ export default function LotCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-          {lot.status === "active" && (
+          {/* Primary actions */}
+          <button
+            type="button"
+            onClick={act("details")}
+            className={`${BTN} border-[1.5px] border-[#2E7D32] bg-white px-3.5 text-[#2E7D32] hover:bg-[#EAF6EA]`}
+          >
+            View Details
+          </button>
+          {status !== "draft" && (
+            <button
+              type="button"
+              onClick={act("offers")}
+              className={`${BTN} bg-[#2E7D32] px-3.5 text-white hover:bg-[#256628]`}
+            >
+              View Offers
+            </button>
+          )}
+          {/* Secondary actions */}
+          {status !== "sold" && (
             <>
-              <button
-                type="button"
-                onClick={act("offers")}
-                className={`${BTN} bg-[#2E7D32] px-3.5 text-white hover:bg-[#256628]`}
-              >
-                View Offers
-              </button>
               <button
                 type="button"
                 onClick={act("edit")}
                 className={`${BTN} border-[1.5px] border-[#2E7D32] bg-white px-3 text-[#2E7D32] hover:bg-[#EAF6EA]`}
               >
                 <Pencil className="h-3.5 w-3.5" />
-                Edit Lot
+                {status === "draft" ? "Edit Draft" : "Edit Lot"}
               </button>
               <button
                 type="button"
@@ -146,33 +169,14 @@ export default function LotCard({
               </button>
             </>
           )}
-          {lot.status === "sold" && (
+          {status === "draft" && (
             <button
               type="button"
-              onClick={act("offers")}
-              className={`${BTN} border-[1.5px] border-[#2E7D32] bg-white px-3.5 text-[#2E7D32] hover:bg-[#EAF6EA]`}
+              onClick={act("publish")}
+              className={`${BTN} bg-[#2E7D32] px-3.5 text-white hover:bg-[#256628]`}
             >
-              View Details
+              Complete &amp; Publish
             </button>
-          )}
-          {lot.status === "draft" && (
-            <>
-              <button
-                type="button"
-                onClick={act("publish")}
-                className={`${BTN} bg-[#2E7D32] px-3.5 text-white hover:bg-[#256628]`}
-              >
-                Complete &amp; Publish
-              </button>
-              <button
-                type="button"
-                onClick={act("edit")}
-                className={`${BTN} border-[1.5px] border-[#2E7D32] bg-white px-3 text-[#2E7D32] hover:bg-[#EAF6EA]`}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                Edit Draft
-              </button>
-            </>
           )}
         </div>
       </div>

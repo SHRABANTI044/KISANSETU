@@ -157,7 +157,10 @@ export default function LotDetailsPanel({
               {lot.status === "sold" && lot.buyer && (
                 <DetailRow icon={BadgeCheck} label="Buyer" value={lot.buyer} strong />
               )}
-              {lot.harvestDate && <DetailRow icon={Calendar} label="Harvest Date" value={lot.harvestDate} />}
+              {lot.harvestDate && <DetailRow icon={Calendar} label="Available From" value={lot.harvestDate} />}
+              {lot.availableUntil && <DetailRow icon={Calendar} label="Available Until" value={lot.availableUntil} />}
+              {lot.variety && <DetailRow icon={Sprout} label="Variety" value={lot.variety} />}
+              <DetailRow icon={BadgeCheck} label="Organic" value={lot.organic ? "Yes" : "No"} />
               <DetailRow icon={MapPin} label="Location" value={lot.location} />
             </div>
 

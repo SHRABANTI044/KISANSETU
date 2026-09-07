@@ -54,7 +54,7 @@ export default function OfferList({
             <p className="text-[13px]">
               <span className="text-[#777777]">Price: </span>
               <span className="font-display text-[15px] font-bold text-[#2E7D32]">{formatPrice(offer.price)}</span>
-              <span className="text-[11px] font-medium text-[#777777]">/kg</span>
+              <span className="text-[11px] font-medium text-[#777777]">/{offer.unit}</span>
             </p>
             <p className="text-[12px] text-[#666666]">
               <span className="text-[#777777]">Qty: </span>
