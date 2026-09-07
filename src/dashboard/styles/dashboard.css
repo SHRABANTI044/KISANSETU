@@ -1,0 +1,26 @@
+/* KrishiLink AI dashboard module styles.
+   The project uses Tailwind for layout/components; this file only holds a few
+   dashboard-specific keyframes/utilities that are awkward in Tailwind. Keep it
+   imported once (from DashboardLayout) — do not import from every page. */
+
+/* Mobile drawer entrance (used by DashboardLayout's DashboardSidebar) */
+@keyframes menu-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-menu-in {
+  animation: menu-in 0.22s ease-out;
+}
+
+/* Consistent soft card treatment for dashboard panels */
+.dash-card {
+  border-radius: 1rem;
+  border: 1px solid #e1e5e1;
+  background-color: #ffffff;
+  box-shadow: 0 10px 26px -18px rgba(17, 24, 39, 0.28);
+}
