@@ -18,7 +18,7 @@ export default function TopBuyers() {
         </Link>
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-5 flex flex-col gap-3.5">
         {TOP_BUYERS.map((buyer) => (
           <article
             key={buyer.id}

@@ -18,7 +18,38 @@ function StatusBadge({ status }: { status: "Live" | "Negotiation" }) {
   );
 }
 
-export default function CropLotsTable() {
+export default function CropLotsTable({ crops }: { crops?: any[] }) {
+  // If real crops are fetched from farmer_crops, display them:
+  const displayLots =
+    crops && crops.length > 0
+      ? crops.map((c, i) => {
+          const isLive =
+            c.status?.toLowerCase() === "live" || c.list_for_sale === true;
+          const statusVal: "Live" | "Negotiation" = isLive
+            ? "Live"
+            : "Negotiation";
+          return {
+            id: c.id || `crop-${i}`,
+            name: c.crop_name || c.crop || "Unnamed Crop",
+            lotId: c.id
+              ? `CL${c.id.toString().slice(-4).toUpperCase()}`
+              : `CL100${i + 1}`,
+            quantity: c.quantity
+              ? `${c.quantity} ${c.unit || "Quintal"}`
+              : "Not specified",
+            quality: c.grade ? `Grade ${c.grade}` : "Standard",
+            status: statusVal,
+            interestedBuyers: 0,
+            initials: (c.crop_name || c.crop || "CR")
+              .slice(0, 2)
+              .toUpperCase(),
+            tone: isLive
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-amber-100 text-amber-700",
+          };
+        })
+      : CROP_LOTS;
+
   return (
     <section className="rounded-2xl border border-[#E1E5E1] bg-white p-5 shadow-[0_10px_30px_-18px_rgba(17,17,17,0.12)] sm:p-6">
       <div className="flex items-center justify-between gap-3">
@@ -42,7 +73,7 @@ export default function CropLotsTable() {
       </div>
 
       <ul>
-        {CROP_LOTS.map((lot) => (
+        {displayLots.map((lot) => (
           <li
             key={lot.id}
             className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-[#F0F3F0] py-3.5 last:border-0 last:pb-0 lg:grid-cols-[2.1fr_1.1fr_0.9fr_0.9fr_44px]"

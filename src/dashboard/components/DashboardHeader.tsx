@@ -1,8 +1,8 @@
-import { Bell, ChevronDown, CloudSun, LogOut, Menu, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, Menu, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { FARMER_USER, WEATHER } from "../data/farmerDashboardData";
+import { FARMER_USER } from "../data/farmerDashboardData";
 
 /** Sticky dashboard top header with the account menu. */
 export default function DashboardHeader({ onMenu }: { onMenu: () => void }) {
@@ -40,28 +40,6 @@ export default function DashboardHeader({ onMenu }: { onMenu: () => void }) {
 
       {/* Right */}
       <div className="flex items-center gap-2.5 sm:gap-3.5">
-        {/* Weather (mock) */}
-        <div className="hidden items-center gap-2.5 rounded-xl border border-[#E1E5E1] bg-[#F7FAF7] px-3.5 py-2 sm:flex">
-          <CloudSun className="h-[22px] w-[22px] text-[#2E7D32]" strokeWidth={2} />
-          <span className="flex flex-col leading-none">
-            <span className="text-[13px] font-bold text-[#111111]">{WEATHER.temp}</span>
-            <span className="mt-0.5 text-[10.5px] font-medium text-[#777777]">{WEATHER.city}</span>
-          </span>
-        </div>
-
-        {/* Notifications (mock) */}
-        <button
-          type="button"
-          aria-label={`${FARMER_USER.notifications} unread notifications`}
-          className="relative grid h-11 w-11 place-items-center rounded-xl border border-[#E1E5E1] bg-white text-[#444444] transition-colors hover:bg-[#EAF6EA] hover:text-[#2E7D32]"
-        >
-          <Bell className="h-[19px] w-[19px]" strokeWidth={2.1} />
-          <span className="absolute -top-1.5 -right-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-            {FARMER_USER.notifications}
-          </span>
-        </button>
-
-        <span className="hidden h-9 w-px bg-[#E1E5E1] sm:block" aria-hidden="true" />
 
         {/* User */}
         <div className="relative">
