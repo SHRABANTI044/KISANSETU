@@ -51,7 +51,7 @@ const ROLE_CONFIG: Record<
     title: "Buyer Login",
     subtitle: "Access your buyer dashboard",
     button: "Login as Buyer",
-    dashboard: "/buyer-dashboard",
+    dashboard: "/buyer/dashboard",
     circleClass: "bg-[#E8F1FC] text-[#1976D2]",
     buttonClass: "bg-[#1976D2] hover:bg-[#1560AE] shadow-[0_12px_24px_-10px_rgba(25,118,210,0.5)]",
     accentClass: "text-[#1976D2]",

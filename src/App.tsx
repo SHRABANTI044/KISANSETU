@@ -31,6 +31,16 @@ import HelpSupportPage from "./dashboard/pages/HelpSupportPage";
 import SettingsPage from "./dashboard/pages/SettingsPage";
 import ProfilePage from "./dashboard/pages/ProfilePage";
 
+// Buyer dashboard
+import BuyerDashboard from "./Buyer Dashboard/pages/BuyerDashboard";
+import MyRequirements from "./Buyer Dashboard/pages/MyRequirements";
+import Farmers from "./Buyer Dashboard/pages/Farmers";
+import OffersNegotiations from "./Buyer Dashboard/pages/OffersNegotiations";
+import BuyerOrdersTracking from "./Buyer Dashboard/pages/OrdersTracking";
+import Payments from "./Buyer Dashboard/pages/Payments";
+import TransportLogistics from "./Buyer Dashboard/pages/TransportLogistics";
+import BuyerHelpSupport from "./Buyer Dashboard/pages/HelpSupport";
+
 /**
  * Handles scrolling on route changes: honours #section hashes, otherwise scrolls to top.
  */
@@ -86,6 +96,16 @@ export default function App() {
         <Route path="/dashboard/help-support" element={<ProtectedRoute><HelpSupportPage /></ProtectedRoute>} />
         <Route path="/dashboard/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/dashboard/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+
+        {/* Buyer dashboard — protected routes */}
+        <Route path="/buyer/dashboard" element={<ProtectedRoute><BuyerDashboard /></ProtectedRoute>} />
+        <Route path="/buyer/requirements" element={<ProtectedRoute><MyRequirements /></ProtectedRoute>} />
+        <Route path="/buyer/farmers" element={<ProtectedRoute><Farmers /></ProtectedRoute>} />
+        <Route path="/buyer/offers-negotiations" element={<ProtectedRoute><OffersNegotiations /></ProtectedRoute>} />
+        <Route path="/buyer/orders-tracking" element={<ProtectedRoute><BuyerOrdersTracking /></ProtectedRoute>} />
+        <Route path="/buyer/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+        <Route path="/buyer/transport-logistics" element={<ProtectedRoute><TransportLogistics /></ProtectedRoute>} />
+        <Route path="/buyer/help-support" element={<ProtectedRoute><BuyerHelpSupport /></ProtectedRoute>} />
 
         {/* Friendly URL redirects into the dashboard module */}
         <Route path="/farmer-dashboard" element={<Navigate to="/dashboard" replace />} />

@@ -232,7 +232,7 @@ export default function BuyerProfilePage() {
         text="Your buyer profile is ready. You can now discover produce, connect with farmers and manage your requirements."
         platformId="KS-BYR-000087"
         cta="Go to Buyer Dashboard"
-        to="/buyer-dashboard"
+        to="/buyer/dashboard"
       />
     );
   }
