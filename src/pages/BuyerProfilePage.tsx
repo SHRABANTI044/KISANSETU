@@ -25,7 +25,7 @@ import {
   TextAreaField,
   TextField,
 } from "../components/profile-ui";
-import { getProfileData, getRegistration, saveProfileData } from "../utils/authStore";
+import { clearProfileData, getProfileData, saveProfileData } from "../utils/authStore";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 
@@ -76,7 +76,7 @@ const EMPTY_REQUIREMENT: RequirementEntry = {
 export default function BuyerProfilePage() {
   const navigate = useNavigate();
   const [done, setDone] = useState(false);
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [saving, setSaving] = useState(false);
 
   const handleCompleteProfile = async () => {
@@ -141,8 +141,13 @@ export default function BuyerProfilePage() {
         .eq("id", user.id);
       if (updateError) throw updateError;
       // 4. Update auth state
+            // 4. Update auth state
       await refreshProfile();
-      // 5. Show completion screen
+      // 5. Clear saved draft from localStorage
+      if (user?.id) {
+        clearProfileData("buyer", user.id);
+      }
+      // 6. Show completion screen
       setDone(true);
     } catch (err: any) {
       console.error("Error saving buyer profile:", err);
@@ -154,19 +159,19 @@ export default function BuyerProfilePage() {
   // --- END OF ADDED CODE ---
   const stepLabel = (i: number) => STEPS[i] ?? "";
 
-  const [state, setState] = useState<BuyerProfileState>(() => {
-    const saved = getProfileData<BuyerProfileState>("buyer");
+    const [state, setState] = useState<BuyerProfileState>(() => {
+    const saved = user ? getProfileData<BuyerProfileState>("buyer", user.id) : null;
     if (saved && saved.data) return { ...saved, confirmed: false };
-    const reg = getRegistration();
+
     return {
       step: 0,
       requirements: [EMPTY_REQUIREMENT],
       confirmed: false,
       data: {
-        contactPerson: reg?.fullName ?? "",
-        mobile: reg?.mobile ?? "",
-        email: reg?.email ?? "",
-        language: reg?.language ?? "English",
+        contactPerson: profile?.full_name ?? user?.user_metadata?.full_name ?? "",
+        mobile: profile?.mobile ?? user?.user_metadata?.mobile ?? "",
+        email: profile?.email ?? user?.email ?? "",
+        language: user?.user_metadata?.language ?? "English",
         businessType: "Wholesaler",
         farmerType: "Any",
         paymentMethod: "Bank Transfer",
@@ -186,10 +191,36 @@ export default function BuyerProfilePage() {
   const setReq = (i: number, key: keyof RequirementEntry) => (value: string) =>
     setRequirements((r) => r.map((x, idx) => (idx === i ? { ...x, [key]: value } : x)));
 
+  /* Load this specific buyer's uncompleted draft or prefill with their details */
   useEffect(() => {
-    saveProfileData("buyer", { data, requirements, step, confirmed });
-  }, [data, requirements, step, confirmed]);
+    if (!user) return;
+    const saved = getProfileData<BuyerProfileState>("buyer", user.id);
+    if (saved && saved.data) {
+      setState((prev) => ({
+        ...prev,
+        ...saved,
+        confirmed: false,
+      }));
+    } else {
+      setState((prev) => ({
+        ...prev,
+        step: 0,
+        data: {
+          ...prev.data,
+          contactPerson: prev.data.contactPerson || profile?.full_name || user.user_metadata?.full_name || "",
+          mobile: prev.data.mobile || profile?.mobile || user.user_metadata?.mobile || "",
+          email: prev.data.email || profile?.email || user.email || "",
+          language: prev.data.language || user.user_metadata?.language || "English",
+        },
+      }));
+    }
+  }, [user?.id, profile]);
 
+  /* Persist progress for this specific user */
+  useEffect(() => {
+    if (!user?.id || done) return;
+    saveProfileData("buyer", { data, requirements, step, confirmed }, user.id);
+  }, [user?.id, data, requirements, step, confirmed, done]);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step]);

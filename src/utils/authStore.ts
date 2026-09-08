@@ -14,9 +14,9 @@ export interface RegistrationData {
   email: string;
   language: string;
 }
-
 const REGISTRATION_KEY = "kishansetu.registration";
-const profileKey = (role: Role) => `kishansetu.profile.${role}`;
+const profileKey = (role: Role, userId?: string) =>
+  userId ? `kishansetu.profile.${role}.${userId}` : `kishansetu.profile.${role}`;
 
 function readJson<T>(key: string): T | null {
   try {
@@ -43,10 +43,22 @@ export function getRegistration(): RegistrationData | null {
   return readJson<RegistrationData>(REGISTRATION_KEY);
 }
 
-export function saveProfileData<T>(role: Role, data: T): void {
-  writeJson(profileKey(role), data);
+export function saveProfileData<T>(role: Role, data: T, userId?: string): void {
+  writeJson(profileKey(role, userId), data);
 }
 
-export function getProfileData<T>(role: Role): T | null {
-  return readJson<T>(profileKey(role));
+export function getProfileData<T>(role: Role, userId?: string): T | null {
+  return readJson<T>(profileKey(role, userId));
+}
+
+export function clearProfileData(role: Role, userId?: string): void {
+  try {
+    if (userId) {
+      localStorage.removeItem(profileKey(role, userId));
+    }
+    // Also remove the old un-scoped key to prevent legacy data leakage
+    localStorage.removeItem(`kishansetu.profile.${role}`);
+  } catch {
+    /* storage unavailable */
+  }
 }

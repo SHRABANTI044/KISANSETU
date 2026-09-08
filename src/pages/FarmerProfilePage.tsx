@@ -23,7 +23,7 @@ import {
   StepNav,
   TextField,
 } from "../components/profile-ui";
-import { getProfileData, getRegistration, saveProfileData } from "../utils/authStore";
+import { clearProfileData, getProfileData, saveProfileData } from "../utils/authStore";
 import { CircleAlert } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -81,7 +81,7 @@ const YES_NO = ["Yes", "No"];
 export default function FarmerProfilePage() {
   const navigate = useNavigate();
   const [done, setDone] = useState(false);
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [saving, setSaving] = useState(false);
 
   const handleCompleteProfile = async () => {
@@ -173,8 +173,13 @@ export default function FarmerProfilePage() {
         .eq("id", user.id);
       if (updateError) throw updateError;
       // 4. Update the app's auth state
+            // 4. Update the app's auth state
       await refreshProfile();
-      // 5. Show completion screen
+      // 5. Clear saved draft from localStorage so it never gets stuck on Step 6
+      if (user?.id) {
+        clearProfileData("farmer", user.id);
+      }
+      // 6. Show completion screen
       setDone(true);
     } catch (err: any) {
       console.error("Error saving farmer profile:", err);
@@ -187,18 +192,18 @@ export default function FarmerProfilePage() {
   const stepLabel = (i: number) => STEPS[i] ?? "";
 
   const [state, setState] = useState<FarmerProfileState>(() => {
-    const saved = getProfileData<FarmerProfileState>("farmer");
+    const saved = user ? getProfileData<FarmerProfileState>("farmer", user.id) : null;
     if (saved && saved.data) return { ...saved, confirmed: false };
-    const reg = getRegistration();
+
     return {
       step: 0,
       crops: [EMPTY_CROP],
       confirmed: false,
       data: {
-        fullName: reg?.fullName ?? "",
-        mobile: reg?.mobile ?? "",
-        email: reg?.email ?? "",
-        language: reg?.language ?? "English",
+        fullName: profile?.full_name ?? user?.user_metadata?.full_name ?? "",
+        mobile: profile?.mobile ?? user?.user_metadata?.mobile ?? "",
+        email: profile?.email ?? user?.email ?? "",
+        language: user?.user_metadata?.language ?? "English",
         gender: "Prefer not to say",
         farmSizeUnit: "Acres",
         landOwnership: "Owned",
@@ -222,10 +227,38 @@ export default function FarmerProfilePage() {
   const goTo = (i: number) => setState((s) => ({ ...s, step: Math.max(0, Math.min(STEPS.length - 1, i)) }));
   const back = () => (step === 0 ? navigate("/register") : goTo(step - 1));
 
-  /* Persist progress for the demo (never lose data between steps/reloads) */
+  /* Load this specific user's uncompleted draft or prefill with their details */
   useEffect(() => {
-    saveProfileData("farmer", { data, crops, step, confirmed });
-  }, [data, crops, step, confirmed]);
+    if (!user) return;
+    const saved = getProfileData<FarmerProfileState>("farmer", user.id);
+    if (saved && saved.data) {
+      // Reopen at the exact step where this user left off!
+      setState((prev) => ({
+        ...prev,
+        ...saved,
+        confirmed: false,
+      }));
+    } else {
+      // First-time user: Start at step 0 and pre-fill with their signup info
+      setState((prev) => ({
+        ...prev,
+        step: 0,
+        data: {
+          ...prev.data,
+          fullName: prev.data.fullName || profile?.full_name || user.user_metadata?.full_name || "",
+          mobile: prev.data.mobile || profile?.mobile || user.user_metadata?.mobile || "",
+          email: prev.data.email || profile?.email || user.email || "",
+          language: prev.data.language || user.user_metadata?.language || "English",
+        },
+      }));
+    }
+  }, [user?.id, profile]);
+
+  /* Persist progress for this specific user */
+  useEffect(() => {
+    if (!user?.id || done) return;
+    saveProfileData("farmer", { data, crops, step, confirmed }, user.id);
+  }, [user?.id, data, crops, step, confirmed, done]);
 
   /* Keep the viewport at the top when moving between steps */
   useEffect(() => {
